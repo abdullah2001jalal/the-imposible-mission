@@ -96,11 +96,24 @@ _mail_status = {"ok": None, "error": None}
 # Utilities
 # --------------------------------------------------------------------------- #
 def log(*args) -> None:
-    print(*args, flush=True)
+    try:
+        print(*args, flush=True)
+    except UnicodeEncodeError:
+        # Windows runner console can be cp1252; strip instead of crashing
+        safe = " ".join(str(a).encode("ascii", "replace").decode("ascii") for a in args)
+        print(safe, flush=True)
 
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def force_utf8_stdio() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 
 def run_link() -> str:
@@ -204,10 +217,24 @@ def kill_terminals() -> None:
     )
 
 
+def terminal_running() -> bool:
+    import subprocess
+    try:
+        out = subprocess.run(
+            ["tasklist", "/FI", "IMAGENAME eq terminal64.exe"],
+            capture_output=True, shell=False,
+        ).stdout.decode("utf-8", "replace")
+        return "terminal64.exe" in out
+    except Exception:
+        return False
+
+
 def prewarm_terminal() -> None:
-    """On a fresh VM the very first terminal launch performs housekeeping
-    (updates, config creation, first-run setup). Launch it once, give it time
-    to settle, then kill it so the Python IPC attach is clean."""
+    """If no terminal is running (workflow step did not launch one), launch it
+    once so first-run housekeeping (updates, config creation) can settle."""
+    if terminal_running():
+        log("terminal64.exe already running -> skipping pre-warm launch")
+        return
     import subprocess
     for path in MT5_INSTALL_PATHS:
         if os.path.exists(path):
@@ -223,6 +250,21 @@ def prewarm_terminal() -> None:
     log("no terminal64.exe found for pre-warm; continuing anyway")
 
 
+def wait_ready(mt5_module, seconds: int = 60) -> bool:
+    deadline = time.time() + seconds
+    while time.time() < deadline:
+        term = mt5_module.terminal_info()
+        acct = mt5_module.account_info()
+        if term is not None and acct is not None and getattr(term, "connected", False):
+            log(
+                f"MT5 CONNECTED: login={acct.login} server={acct.server} "
+                f"account={acct.name} balance={acct.balance} {acct.currency}"
+            )
+            return True
+        time.sleep(3)
+    return False
+
+
 def connect_mt5(mt5_module) -> dict:
     if not EXNESS_LOGIN or not EXNESS_PASSWORD or not EXNESS_SERVER:
         raise RuntimeError("EXNESS_LOGIN / EXNESS_PASSWORD / EXNESS_SERVER env missing")
@@ -233,37 +275,54 @@ def connect_mt5(mt5_module) -> dict:
         raise RuntimeError(f"EXNESS_LOGIN must be numeric, got {EXNESS_LOGIN!r}") from exc
 
     # timeout is in MILLISECONDS (official docs: default 60000 = 60s)
-    creds = {"login": login_int, "password": EXNESS_PASSWORD, "server": EXNESS_SERVER, "timeout": 180000}
-    paths = [None] + [p for p in MT5_INSTALL_PATHS if os.path.exists(p)]
+    creds = {"login": login_int, "password": EXNESS_PASSWORD, "server": EXNESS_SERVER, "timeout": 120000}
+    existing_paths = [p for p in MT5_INSTALL_PATHS if os.path.exists(p)]
+
+    strategies = [
+        ("attach to running terminal", {}),
+        ("attach + mt5.login", {"post_login": True}),
+        ("launch with credentials", dict(creds)),
+        ("launch with credentials + explicit path", {**creds, "path": existing_paths[0] if existing_paths else None}),
+    ]
 
     prewarm_terminal()
     last_err = None
-    for attempt in range(1, 4):
-        for path in paths:
-            kwargs = dict(creds)
-            if path:
-                kwargs["path"] = path
-            if mt5_module.initialize(**kwargs):
-                # Wait until terminal is fully connected and account info is available
-                deadline = time.time() + 90
-                while time.time() < deadline:
-                    term = mt5_module.terminal_info()
+    for name, extra in strategies:
+        kwargs = dict(extra)
+        kwargs.pop("post_login", None)
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
+        log(f"MT5 strategy: {name}")
+        try:
+            if not mt5_module.initialize(**kwargs):
+                last_err = f"initialize failed: {mt5_module.last_error()}"
+                log(f"  -> {last_err}")
+                kill_terminals()
+                time.sleep(10)
+                continue
+            if wait_ready(mt5_module, 60):
+                acct = mt5_module.account_info()
+                return {"login": acct.login, "server": acct.server, "balance": acct.balance}
+            last_err = "terminal attached but account_info/terminal_info never became ready"
+            log(f"  -> {last_err}")
+            # terminal reachable but no account: try an explicit account login on the attached instance
+            if extra.get("post_login") and mt5_module.login(
+                login_int, password=EXNESS_PASSWORD, server=EXNESS_SERVER
+            ):
+                if wait_ready(mt5_module, 60):
                     acct = mt5_module.account_info()
-                    if term is not None and acct is not None and getattr(term, "connected", False):
-                        log(
-                            f"MT5 CONNECTED: login={acct.login} server={acct.server} "
-                            f"account={acct.name} balance={acct.balance} {acct.currency}"
-                        )
-                        return {"login": acct.login, "server": acct.server, "balance": acct.balance}
-                    time.sleep(3)
-                last_err = "initialize() ok but account_info/terminal_info never became ready"
+                    return {"login": acct.login, "server": acct.server, "balance": acct.balance}
+                last_err = "mt5.login() ok but account still not ready"
+            mt5_module.shutdown()
+        except Exception as exc:
+            last_err = f"{type(exc).__name__}: {exc}"
+            log(f"  -> strategy error: {last_err}")
+            try:
                 mt5_module.shutdown()
-            else:
-                last_err = str(mt5_module.last_error())
-        log(f"MT5 connect attempt {attempt}/3 failed: {last_err}")
+            except Exception:
+                pass
         kill_terminals()
-        time.sleep(15)
-    raise RuntimeError(f"MT5 initialize failed after retries: {last_err}")
+        time.sleep(10)
+    raise RuntimeError(f"MT5 connection failed after all strategies; last error: {last_err}")
 
 
 def resolve_timeframe(mt5_module):
@@ -596,6 +655,7 @@ def run_pipeline(state: dict) -> dict:
 
 
 def main() -> int:
+    force_utf8_stdio()
     if not GEMINI_KEYS:
         send_email(
             "🚨 Trading bot ERROR: no Gemini keys",
@@ -627,8 +687,7 @@ def main() -> int:
     # ---- alert policy ----
     if error is not None:
         email_error("pipeline", error, f"Account: {EXNESS_LOGIN} / {EXNESS_SERVER}; symbol {SYMBOL} {TIMEFRAME}")
-        # if even the error email fails, make sure the run is visibly red
-        sys.exit(1 if _mail_status["error"] else 1)
+        sys.exit(1)
 
     trade = summary.get("trade")
     if isinstance(trade, dict) and trade.get("ticket"):
