@@ -55,6 +55,15 @@ jobs:
             exit 1
           }
           Write-Host 'terminal64.exe installed successfully'
+          $ver = (Get-Item 'C:\Program Files\MetaTrader 5\terminal64.exe').VersionInfo.FileVersion
+          Write-Host "installed terminal build: $ver"
+
+          # Pin the terminal build: MetaQuotes' live-update silently upgrades the terminal
+          # to a newer build than the PyPI MetaTrader5 module (version-sensitive IPC => 'IPC timeout').
+          # Blocking the update CDN before the FIRST launch keeps the installed build.
+          Add-Content -Path "$env:SystemRoot\System32\drivers\etc\hosts" -Value "`n0.0.0.0 download.terminal.free`n0.0.0.0 download.mql5.com"
+          ipconfig /flushdns | Out-Null
+          Write-Host 'update CDN blocked via hosts file (build pinned for Python IPC compatibility)'
           Get-ChildItem "$env:APPDATA\MetaQuotes\Terminal" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
             $logdir = Join-Path $_.FullName 'logs'
             if (Test-Path $logdir) {

@@ -313,8 +313,8 @@ def connect_mt5(mt5_module) -> dict:
     creds = {"login": login_int, "password": EXNESS_PASSWORD, "server": EXNESS_SERVER, "timeout": 90000}
 
     strategies = [
+        ("plain launch + attach + mt5.login (no startup config)", "plain"),
         ("config-file launch (auto-login) + attach", "config"),
-        ("module launch with credentials", "creds"),
         ("portable config-file launch + attach", "config_portable"),
     ]
 
@@ -325,7 +325,32 @@ def connect_mt5(mt5_module) -> dict:
         portable = mode.endswith("_portable")
         log(f"MT5 strategy: {name}")
         try:
-            if mode.startswith("config"):
+            if mode == "plain":
+                launch_terminal()
+                time.sleep(30)
+                if not mt5_module.initialize():
+                    last_err = str(mt5_module.last_error())
+                    log(f"  -> not ready ({last_err})")
+                    dump_terminal_logs()
+                    kill_terminals()
+                    time.sleep(10)
+                    continue
+                if wait_ready(mt5_module, 60):
+                    acct = mt5_module.account_info()
+                    if acct is not None and int(acct.login) == login_int:
+                        return {"login": acct.login, "server": acct.server, "balance": acct.balance}
+                # terminal ready but wrong/no account -> explicit programmatic login
+                if mt5_module.login(login_int, password=EXNESS_PASSWORD, server=EXNESS_SERVER):
+                    if wait_ready(mt5_module, 60):
+                        acct = mt5_module.account_info()
+                        return {"login": acct.login, "server": acct.server, "balance": acct.balance}
+                last_err = f"plain launch attached but login failed ({mt5_module.last_error()})"
+                log(f"  -> {last_err}")
+                try:
+                    mt5_module.shutdown()
+                except Exception:
+                    pass
+            elif mode.startswith("config"):
                 launch_terminal(write_login_config(), portable=portable)
                 time.sleep(30)
                 ok = mt5_module.initialize(portable=True) if portable else mt5_module.initialize()
