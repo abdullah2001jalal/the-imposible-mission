@@ -4,13 +4,21 @@
 
 ## How it works
 
-- Runs every **15 minutes** (cron `7,22,37,52 * * * *`, deliberately off the :00/:15/:30/:45 congestion slots GitHub is known to throttle) on `windows-latest` via [`.github/workflows/trading.yml`](.github/workflows/trading.yml).
+- Runs every **~15 minutes** on `windows-latest` via [`.github/workflows/trading.yml`](.github/workflows/trading.yml).
+- **Scheduling = self-perpetuating chain**: GitHub's native cron scheduler is unreliable
+  ([actions/runner#4210](https://github.com/actions/runner/issues/4210) — scheduled runs can silently never fire).
+  Instead, every run **re-arms the next run itself**: a step right after checkout waits ~8 minutes and then calls the
+  `workflow_dispatch` API, so the chain continues 24/7 independently of GitHub's scheduler. The step is placed *before*
+  the fragile MT5 install (a crashed run still leaves its successor queued) and includes chain de-duplication
+  (if another run is already queued — cron, an external scheduler ping, or a manual test — it becomes the next link,
+  so there is always exactly one chain). The `cron` trigger in the workflow is kept only as a chain-restarter watchdog.
 - Each run installs an MT5 terminal, connects to `Exness-MT5Trial15`, fetches the latest **20 M15 candles** for **EURUSD**, asks **`gemini-3.8-flash`** (temperature 0.1) for a strict-JSON signal
   `{"action": "BUY/SELL/HOLD", "sl_points": 150, "tp_points": 300}`,
   and places the order through `mt5.order_send` with broker-side SL/TP.
 - **Symbol auto-resolution**: Exness names the instrument `EURUSDm` (note the suffix). The bot calls `symbols_total()`/`symbols_get()` and automatically resolves and uses the broker-specific name — no manual config needed if the broker renames symbols.
-- **5-key rotation engine**: `state.json` is committed back to this repo after every run,
-  so the engine knows which Gemini key slot is active (8 runs = 2 hours per key, then rotates 1→2→3→4→5→1… forever).
+- **5-key rotation engine**: `state.json` is committed back to this repo after every run
+  (race-proof push: rebase onto latest master, conflicts resolved in favor of the fresher state, 5 attempts),
+  so the engine knows which Gemini key slot is active (8 runs = ~2 hours per key, then rotates 1→2→3→4→5→1… forever).
 - **Alert policy (Resend, `onboarding@resend.dev`)**: email is sent **only** on errors (any stage), on successful order executions, and on successful boot verification. Routine/quiet runs stay silent. Market-closed responses are logged, not emailed, to avoid weekend spam.
 
 ## Repository secrets (set via GitHub → Settings → Secrets → Actions)
