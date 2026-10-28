@@ -210,11 +210,7 @@ def rotate_state(state: dict, summary) -> dict:
 # --------------------------------------------------------------------------- #
 def kill_terminals() -> None:
     import subprocess
-    subprocess.run(
-        ["taskkill", "/f", "/im", "terminal64.exe"],
-        capture_output=True,
-        shell=False,
-    )
+    subprocess.run(["taskkill", "/f", "/im", "terminal64.exe"], capture_output=True, shell=False)
 
 
 def terminal_running() -> bool:
@@ -229,25 +225,64 @@ def terminal_running() -> bool:
         return False
 
 
-def prewarm_terminal() -> None:
-    """If no terminal is running (workflow step did not launch one), launch it
-    once so first-run housekeeping (updates, config creation) can settle."""
-    if terminal_running():
-        log("terminal64.exe already running -> skipping pre-warm launch")
-        return
-    import subprocess
+def find_terminal_exe():
     for path in MT5_INSTALL_PATHS:
         if os.path.exists(path):
-            log(f"PRE-WARM terminal (first-run housekeeping): {path}")
-            try:
-                subprocess.Popen([path], cwd=os.path.dirname(path))
-                time.sleep(45)
-            except Exception as exc:
-                log(f"pre-warm launch skipped: {type(exc).__name__}: {exc}")
-            kill_terminals()
-            time.sleep(5)
-            return
-    log("no terminal64.exe found for pre-warm; continuing anyway")
+            return path
+    return None
+
+
+def write_login_config() -> str:
+    ini = (
+        "[Common]\n"
+        f"Login={EXNESS_LOGIN}\n"
+        f"Password={EXNESS_PASSWORD}\n"
+        f"Server={EXNESS_SERVER}\n"
+        "News=0\n"
+    )
+    path = os.path.join(os.environ.get("RUNNER_TEMP") or os.getcwd(), "mt5login.ini")
+    with open(path, "w", encoding="ascii", errors="replace") as fh:
+        fh.write(ini)
+    return path
+
+
+def launch_terminal(config_path=None, portable=False) -> None:
+    import subprocess
+    exe = find_terminal_exe()
+    if exe is None:
+        raise RuntimeError("terminal64.exe not found in any known install path")
+    args = [exe]
+    if config_path:
+        args.append(f"/config:{config_path}")
+    if portable:
+        args.append("/portable")
+    log(f"launching terminal: {' '.join(args)}")
+    subprocess.Popen(args, cwd=os.path.dirname(exe))
+
+
+def dump_terminal_logs(tail: int = 35) -> None:
+    """Print the tail of the terminal's own logs for CI diagnosis."""
+    base = os.path.join(os.environ.get("APPDATA", ""), "MetaQuotes", "Terminal")
+    dumped = 0
+    if os.path.isdir(base):
+        for data_dir in sorted(os.listdir(base)):
+            logdir = os.path.join(base, data_dir, "logs")
+            if not os.path.isdir(logdir):
+                continue
+            for name in sorted(os.listdir(logdir), reverse=True):
+                if dumped >= 2:
+                    return
+                fp = os.path.join(logdir, name)
+                try:
+                    if os.path.getsize(fp) == 0:
+                        continue
+                    log(f"--- terminal log {data_dir}/{name} (tail {tail}) ---")
+                    with open(fp, encoding="utf-8", errors="replace") as fh:
+                        for line in fh.read().splitlines()[-tail:]:
+                            log("  " + line)
+                    dumped += 1
+                except Exception as exc:
+                    log(f"  (log read failed: {exc})")
 
 
 def wait_ready(mt5_module, seconds: int = 60) -> bool:
@@ -275,44 +310,36 @@ def connect_mt5(mt5_module) -> dict:
         raise RuntimeError(f"EXNESS_LOGIN must be numeric, got {EXNESS_LOGIN!r}") from exc
 
     # timeout is in MILLISECONDS (official docs: default 60000 = 60s)
-    creds = {"login": login_int, "password": EXNESS_PASSWORD, "server": EXNESS_SERVER, "timeout": 120000}
-    existing_paths = [p for p in MT5_INSTALL_PATHS if os.path.exists(p)]
+    creds = {"login": login_int, "password": EXNESS_PASSWORD, "server": EXNESS_SERVER, "timeout": 90000}
 
     strategies = [
-        ("attach to running terminal", {}),
-        ("attach + mt5.login", {"post_login": True}),
-        ("launch with credentials", dict(creds)),
-        ("launch with credentials + explicit path", {**creds, "path": existing_paths[0] if existing_paths else None}),
+        ("config-file launch (auto-login) + attach", "config"),
+        ("module launch with credentials", "creds"),
+        ("portable config-file launch + attach", "config_portable"),
     ]
 
-    prewarm_terminal()
+    kill_terminals()
+    time.sleep(3)
     last_err = None
-    for name, extra in strategies:
-        kwargs = dict(extra)
-        kwargs.pop("post_login", None)
-        kwargs = {k: v for k, v in kwargs.items() if v is not None}
+    for name, mode in strategies:
+        portable = mode.endswith("_portable")
         log(f"MT5 strategy: {name}")
         try:
-            if not mt5_module.initialize(**kwargs):
-                last_err = f"initialize failed: {mt5_module.last_error()}"
-                log(f"  -> {last_err}")
-                kill_terminals()
-                time.sleep(10)
-                continue
-            if wait_ready(mt5_module, 60):
+            if mode.startswith("config"):
+                launch_terminal(write_login_config(), portable=portable)
+                time.sleep(30)
+                ok = mt5_module.initialize(portable=True) if portable else mt5_module.initialize()
+            else:
+                ok = mt5_module.initialize(**{**creds, "portable": True} if portable else creds)
+            if ok and wait_ready(mt5_module, 60):
                 acct = mt5_module.account_info()
                 return {"login": acct.login, "server": acct.server, "balance": acct.balance}
-            last_err = "terminal attached but account_info/terminal_info never became ready"
-            log(f"  -> {last_err}")
-            # terminal reachable but no account: try an explicit account login on the attached instance
-            if extra.get("post_login") and mt5_module.login(
-                login_int, password=EXNESS_PASSWORD, server=EXNESS_SERVER
-            ):
-                if wait_ready(mt5_module, 60):
-                    acct = mt5_module.account_info()
-                    return {"login": acct.login, "server": acct.server, "balance": acct.balance}
-                last_err = "mt5.login() ok but account still not ready"
-            mt5_module.shutdown()
+            last_err = str(mt5_module.last_error())
+            log(f"  -> not ready ({last_err})")
+            try:
+                mt5_module.shutdown()
+            except Exception:
+                pass
         except Exception as exc:
             last_err = f"{type(exc).__name__}: {exc}"
             log(f"  -> strategy error: {last_err}")
@@ -320,6 +347,7 @@ def connect_mt5(mt5_module) -> dict:
                 mt5_module.shutdown()
             except Exception:
                 pass
+        dump_terminal_logs()
         kill_terminals()
         time.sleep(10)
     raise RuntimeError(f"MT5 connection failed after all strategies; last error: {last_err}")

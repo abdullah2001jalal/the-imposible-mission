@@ -31,12 +31,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install MetaTrader 5 terminal (silent) + pre-login
+      - name: Install MetaTrader 5 terminal (silent)
         shell: pwsh
-        env:
-          EXNESS_LOGIN: ${{ secrets.EXNESS_LOGIN }}
-          EXNESS_PASSWORD: ${{ secrets.EXNESS_PASSWORD }}
-          EXNESS_SERVER: ${{ secrets.EXNESS_SERVER }}
         run: |
           $installer = Join-Path $env:RUNNER_TEMP 'mt5setup.exe'
           $urls = @(
@@ -59,28 +55,15 @@ jobs:
             exit 1
           }
           Write-Host 'terminal64.exe installed successfully'
-
-          # First-run housekeeping + account pre-login through a config file,
-          # then LEAVE THE TERMINAL RUNNING for the Python API to attach to.
-          $ini = "[Common]`nLogin=$env:EXNESS_LOGIN`nPassword=$env:EXNESS_PASSWORD`nServer=$env:EXNESS_SERVER"
-          $iniPath = Join-Path $env:RUNNER_TEMP 'mt5login.ini'
-          Set-Content -Path $iniPath -Value $ini -Encoding ASCII
-          Start-Process 'C:\Program Files\MetaTrader 5\terminal64.exe' -ArgumentList "/config:$iniPath"
-          Start-Sleep -Seconds 75
-          $alive = Get-Process terminal64 -ErrorAction SilentlyContinue
-          Write-Host "terminal64 process alive: $($null -ne $alive)"
-          $logDir = Get-ChildItem "$env:APPDATA\MetaQuotes\Terminal" -Directory -ErrorAction SilentlyContinue |
-                    ForEach-Object { Join-Path $_.FullName 'logs' } |
-                    Where-Object { Test-Path $_ } |
-                    Select-Object -First 1
-          if ($logDir) {
-            $latest = Get-ChildItem $logDir -Filter *.log | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-            if ($latest) {
-              Write-Host "--- terminal log tail ($($latest.Name)) ---"
-              Get-Content $latest.FullName -Tail 25 | ForEach-Object { Write-Host $_ }
+          Get-ChildItem "$env:APPDATA\MetaQuotes\Terminal" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            $logdir = Join-Path $_.FullName 'logs'
+            if (Test-Path $logdir) {
+              Get-ChildItem $logdir -Filter *.log -ErrorAction SilentlyContinue |
+                Sort-Object LastWriteTime -Descending | Select-Object -First 2 | ForEach-Object {
+                  Write-Host "--- $($_.Name) ---"
+                  Get-Content $_.FullName -Tail 20 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
+                }
             }
-          } else {
-            Write-Host 'no terminal data log dir found yet'
           }
 
       - name: Install Python dependencies
