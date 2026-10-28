@@ -385,10 +385,15 @@ def connect_mt5(mt5_module) -> dict:
     creds = {"login": login_int, "password": EXNESS_PASSWORD, "server": EXNESS_SERVER}
 
     strategies = [
-        # Let the module spawn terminal64.exe itself (same elevation/session,
-        # no first-run wizard) and hand it the credentials directly.
+        # Launch the terminal OURSELVES with the startup config (auto-login +
+        # [Experts] AllowLiveTrading=1 -> AutoTrading ON, required for
+        # order_send), then attach the module IPC to the running instance.
+        ("config-launch (auto-login + algo trading ON) + module attach (patched IPC)",
+         "config_spawn"),
+        # Proven fallback: let the module spawn terminal64.exe itself (same
+        # elevation/session, no first-run wizard) and hand it the credentials.
         ("module-spawned terminal with credentials (patched IPC)", "spawn"),
-        # Fallbacks: launch with a startup config and attach.
+        # Further fallbacks: launch with a startup config and attach.
         ("config-file launch (auto-login) + attach", "config"),
         ("portable config-file launch + attach", "config_portable"),
     ]
@@ -400,7 +405,17 @@ def connect_mt5(mt5_module) -> dict:
         portable = mode.endswith("_portable")
         log(f"MT5 strategy: {name}")
         try:
-            if mode == "spawn":
+            if mode == "config_spawn":
+                exe = find_terminal_exe()
+                if exe is None:
+                    raise RuntimeError("terminal64.exe not found in any known install path")
+                write_data_folder_config()  # seed the default common.ini too (if data folder exists)
+                launch_terminal(write_login_config(), portable=False)
+                # Give the terminal time to start, auto-login and apply [Experts].
+                time.sleep(15)
+                # Attach to the running terminal; creds passed as a safety net.
+                ok = mt5_module.initialize(path=exe, timeout=90000, **creds)
+            elif mode == "spawn":
                 exe = find_terminal_exe()
                 if exe is None:
                     raise RuntimeError("terminal64.exe not found in any known install path")
@@ -858,6 +873,12 @@ def run_pipeline(state: dict) -> dict:
     acct = connect_mt5(mt5_module)
 
     log(describe_terminal(mt5_module))
+    term = mt5_module.terminal_info()
+    if term is not None and not getattr(term, "trade_allowed", False):
+        log(
+            "WARNING: terminal trade_allowed=False (AutoTrading OFF) — "
+            "order_send will fail with retcode 10027 until enabled"
+        )
     symbol = resolve_symbol(mt5_module)
 
     timeframe = resolve_timeframe(mt5_module)
