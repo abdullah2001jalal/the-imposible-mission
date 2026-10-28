@@ -122,7 +122,12 @@ def send_email(subject: str, html: str) -> bool:
     req = urllib.request.Request(
         "https://api.resend.com/emails",
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bearer {RESEND_API_KEY}",
+            "Content-Type": "application/json",
+            # Resend's Cloudflare front bans the default "Python-urllib/x" signature (403, error 1010)
+            "User-Agent": "resend-python/2.0.0",
+        },
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
@@ -190,6 +195,34 @@ def rotate_state(state: dict, summary) -> dict:
 # --------------------------------------------------------------------------- #
 # MetaTrader 5 layer
 # --------------------------------------------------------------------------- #
+def kill_terminals() -> None:
+    import subprocess
+    subprocess.run(
+        ["taskkill", "/f", "/im", "terminal64.exe"],
+        capture_output=True,
+        shell=False,
+    )
+
+
+def prewarm_terminal() -> None:
+    """On a fresh VM the very first terminal launch performs housekeeping
+    (updates, config creation, first-run setup). Launch it once, give it time
+    to settle, then kill it so the Python IPC attach is clean."""
+    import subprocess
+    for path in MT5_INSTALL_PATHS:
+        if os.path.exists(path):
+            log(f"PRE-WARM terminal (first-run housekeeping): {path}")
+            try:
+                subprocess.Popen([path], cwd=os.path.dirname(path))
+                time.sleep(45)
+            except Exception as exc:
+                log(f"pre-warm launch skipped: {type(exc).__name__}: {exc}")
+            kill_terminals()
+            time.sleep(5)
+            return
+    log("no terminal64.exe found for pre-warm; continuing anyway")
+
+
 def connect_mt5(mt5_module) -> dict:
     if not EXNESS_LOGIN or not EXNESS_PASSWORD or not EXNESS_SERVER:
         raise RuntimeError("EXNESS_LOGIN / EXNESS_PASSWORD / EXNESS_SERVER env missing")
@@ -199,9 +232,11 @@ def connect_mt5(mt5_module) -> dict:
     except ValueError as exc:
         raise RuntimeError(f"EXNESS_LOGIN must be numeric, got {EXNESS_LOGIN!r}") from exc
 
-    creds = {"login": login_int, "password": EXNESS_PASSWORD, "server": EXNESS_SERVER}
+    # timeout is in MILLISECONDS (official docs: default 60000 = 60s)
+    creds = {"login": login_int, "password": EXNESS_PASSWORD, "server": EXNESS_SERVER, "timeout": 180000}
     paths = [None] + [p for p in MT5_INSTALL_PATHS if os.path.exists(p)]
 
+    prewarm_terminal()
     last_err = None
     for attempt in range(1, 4):
         for path in paths:
@@ -226,7 +261,8 @@ def connect_mt5(mt5_module) -> dict:
             else:
                 last_err = str(mt5_module.last_error())
         log(f"MT5 connect attempt {attempt}/3 failed: {last_err}")
-        time.sleep(10)
+        kill_terminals()
+        time.sleep(15)
     raise RuntimeError(f"MT5 initialize failed after retries: {last_err}")
 
 
