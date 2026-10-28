@@ -285,7 +285,11 @@ def dump_terminal_logs(tail: int = 35) -> None:
                     log(f"  (log read failed: {exc})")
 
 
-def wait_ready(mt5_module, seconds: int = 60) -> bool:
+def wait_ready(mt5_module, seconds: int = 90):
+    """Polls until the terminal is genuinely connected to the broker.
+
+    Returns the account_info() namedtuple on success, None on timeout.
+    """
     deadline = time.time() + seconds
     while time.time() < deadline:
         term = mt5_module.terminal_info()
@@ -295,9 +299,9 @@ def wait_ready(mt5_module, seconds: int = 60) -> bool:
                 f"MT5 CONNECTED: login={acct.login} server={acct.server} "
                 f"account={acct.name} balance={acct.balance} {acct.currency}"
             )
-            return True
+            return acct
         time.sleep(3)
-    return False
+    return None
 
 
 def connect_mt5(mt5_module) -> dict:
@@ -309,11 +313,13 @@ def connect_mt5(mt5_module) -> dict:
     except ValueError as exc:
         raise RuntimeError(f"EXNESS_LOGIN must be numeric, got {EXNESS_LOGIN!r}") from exc
 
-    # timeout is in MILLISECONDS (official docs: default 60000 = 60s)
-    creds = {"login": login_int, "password": EXNESS_PASSWORD, "server": EXNESS_SERVER, "timeout": 90000}
+    creds = {"login": login_int, "password": EXNESS_PASSWORD, "server": EXNESS_SERVER}
 
     strategies = [
-        ("plain launch + attach + mt5.login (no startup config)", "plain"),
+        # Let the module spawn terminal64.exe itself (same elevation/session,
+        # no first-run wizard) and hand it the credentials directly.
+        ("module-spawned terminal with credentials (patched IPC)", "spawn"),
+        # Fallbacks: launch with a startup config and attach.
         ("config-file launch (auto-login) + attach", "config"),
         ("portable config-file launch + attach", "config_portable"),
     ]
@@ -325,53 +331,42 @@ def connect_mt5(mt5_module) -> dict:
         portable = mode.endswith("_portable")
         log(f"MT5 strategy: {name}")
         try:
-            if mode == "plain":
-                launch_terminal()
-                time.sleep(30)
-                if not mt5_module.initialize():
-                    last_err = str(mt5_module.last_error())
-                    log(f"  -> not ready ({last_err})")
-                    dump_terminal_logs()
-                    kill_terminals()
-                    time.sleep(10)
-                    continue
-                if wait_ready(mt5_module, 60):
-                    acct = mt5_module.account_info()
-                    if acct is not None and int(acct.login) == login_int:
-                        return {"login": acct.login, "server": acct.server, "balance": acct.balance}
-                # terminal ready but wrong/no account -> explicit programmatic login
-                if mt5_module.login(login_int, password=EXNESS_PASSWORD, server=EXNESS_SERVER):
-                    if wait_ready(mt5_module, 60):
-                        acct = mt5_module.account_info()
-                        return {"login": acct.login, "server": acct.server, "balance": acct.balance}
-                last_err = f"plain launch attached but login failed ({mt5_module.last_error()})"
-                log(f"  -> {last_err}")
-                try:
-                    mt5_module.shutdown()
-                except Exception:
-                    pass
+            if mode == "spawn":
+                exe = find_terminal_exe()
+                if exe is None:
+                    raise RuntimeError("terminal64.exe not found in any known install path")
+                # timeout is in MILLISECONDS (official docs: default 60000 = 60s)
+                ok = mt5_module.initialize(path=exe, timeout=90000, **creds)
             elif mode.startswith("config"):
                 launch_terminal(write_login_config(), portable=portable)
                 time.sleep(30)
-                ok = mt5_module.initialize(portable=True) if portable else mt5_module.initialize()
+                ok = (
+                    mt5_module.initialize(portable=True, timeout=90000)
+                    if portable
+                    else mt5_module.initialize(timeout=90000)
+                )
             else:
-                ok = mt5_module.initialize(**{**creds, "portable": True} if portable else creds)
-            if ok and wait_ready(mt5_module, 60):
-                acct = mt5_module.account_info()
-                return {"login": acct.login, "server": acct.server, "balance": acct.balance}
-            last_err = str(mt5_module.last_error())
-            log(f"  -> not ready ({last_err})")
-            try:
-                mt5_module.shutdown()
-            except Exception:
-                pass
+                ok = mt5_module.initialize(timeout=90000, **creds)
+            if ok:
+                acct = wait_ready(mt5_module, 90)
+                if acct is None:
+                    # Attached but no broker connection yet -> explicit login
+                    log("  -> attach OK but not connected; explicit mt5.login()...")
+                    if mt5_module.login(login_int, password=EXNESS_PASSWORD, server=EXNESS_SERVER):
+                        acct = wait_ready(mt5_module, 60)
+                if acct is not None:
+                    return {"login": acct.login, "server": acct.server, "balance": acct.balance}
+                last_err = f"initialized but no account/connected ({mt5_module.last_error()})"
+            else:
+                last_err = str(mt5_module.last_error())
+            log(f"  -> {last_err}")
         except Exception as exc:
             last_err = f"{type(exc).__name__}: {exc}"
             log(f"  -> strategy error: {last_err}")
-            try:
-                mt5_module.shutdown()
-            except Exception:
-                pass
+        try:
+            mt5_module.shutdown()
+        except Exception:
+            pass
         dump_terminal_logs()
         kill_terminals()
         time.sleep(10)
@@ -672,6 +667,16 @@ def email_error(stage: str, exc: Exception, extra: str = "") -> bool:
 # Main pipeline
 # --------------------------------------------------------------------------- #
 def run_pipeline(state: dict) -> dict:
+    # The IPC patch MUST be applied before the first mt5.initialize() call --
+    # it forces the terminal-status reply past the STATUS_INITIALIZING deadlock
+    # that otherwise makes initialize() time out on fresh CI terminals
+    # (see mt5_ipc_patch.py for details).
+    try:
+        import mt5_ipc_patch
+        _patched = mt5_ipc_patch.apply()
+        log(f"IPC patch: applied={_patched} | {mt5_ipc_patch.status}")
+    except Exception as exc:
+        log(f"IPC patch not applied: {type(exc).__name__}: {exc}")
     import MetaTrader5 as mt5_module
 
     key_index = int(state.get("key_index", 0)) % len(GEMINI_KEYS)
