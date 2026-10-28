@@ -212,7 +212,11 @@ jobs:
           if (-not $pushed) { Write-Host '::error::failed to persist state.json after 5 attempts'; exit 1 }
 
       - name: Email operator on any pipeline failure
-        if: failure()
+        # always() lets this step run even when the job was cancelled by the
+        # 30-minute timeout (conclusion=cancelled, failure() alone is false
+        # there -> a killed run would otherwise die silently); !success()
+        # restricts it to genuine failure/cancellation.
+        if: always() && !success()
         shell: pwsh
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
