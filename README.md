@@ -4,10 +4,11 @@
 
 ## How it works
 
-- Runs every **15 minutes** on `windows-latest` via [`.github/workflows/trading.yml`](.github/workflows/trading.yml).
+- Runs every **15 minutes** (cron `7,22,37,52 * * * *`, deliberately off the :00/:15/:30/:45 congestion slots GitHub is known to throttle) on `windows-latest` via [`.github/workflows/trading.yml`](.github/workflows/trading.yml).
 - Each run installs an MT5 terminal, connects to `Exness-MT5Trial15`, fetches the latest **20 M15 candles** for **EURUSD**, asks **`gemini-3.8-flash`** (temperature 0.1) for a strict-JSON signal
   `{"action": "BUY/SELL/HOLD", "sl_points": 150, "tp_points": 300}`,
   and places the order through `mt5.order_send` with broker-side SL/TP.
+- **Symbol auto-resolution**: Exness names the instrument `EURUSDm` (note the suffix). The bot calls `symbols_total()`/`symbols_get()` and automatically resolves and uses the broker-specific name — no manual config needed if the broker renames symbols.
 - **5-key rotation engine**: `state.json` is committed back to this repo after every run,
   so the engine knows which Gemini key slot is active (8 runs = 2 hours per key, then rotates 1→2→3→4→5→1… forever).
 - **Alert policy (Resend, `onboarding@resend.dev`)**: email is sent **only** on errors (any stage), on successful order executions, and on successful boot verification. Routine/quiet runs stay silent. Market-closed responses are logged, not emailed, to avoid weekend spam.
