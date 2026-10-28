@@ -633,7 +633,14 @@ def call_gemini(key_index: int, prompt: str) -> dict:
     for model, key, slot in attempts:
         tag = f"model={model} key#{slot + 1}"
         try:
-            client = genai.Client(api_key=key)
+            # Cap the per-attempt HTTP timeout (SDK default is 5 min): during a
+            # 503 "High Demand" storm the server can accept the connection and
+            # then hang, burning ~5 min per dead attempt (observed). 90 s keeps
+            # the full 9-attempt chain bounded to ~14 min worst case.
+            client = genai.Client(
+                api_key=key,
+                http_options=types.HttpOptions(timeout=90_000),  # milliseconds
+            )
             config = types.GenerateContentConfig(
                 temperature=0.1,
                 system_instruction=SYSTEM_INSTRUCTION,
