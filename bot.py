@@ -453,8 +453,17 @@ def resolve_timeframe(mt5_module):
 
 
 def fetch_rates(mt5_module, timeframe):
-    if not mt5_module.symbol_select(SYMBOL, True):
-        raise RuntimeError(f"symbol_select({SYMBOL}) failed: {mt5_module.last_error()}")
+    # The terminal may still be finishing its startup (recompilation, Market
+    # Watch init) right after login -> 'Terminal: Call failed'. Retry hard.
+    sel_err = None
+    for attempt in range(1, 11):
+        if mt5_module.symbol_select(SYMBOL, True):
+            break
+        sel_err = mt5_module.last_error()
+        log(f"symbol_select attempt {attempt}/10 failed ({sel_err}), retrying...")
+        time.sleep(5)
+    else:
+        raise RuntimeError(f"symbol_select({SYMBOL}) failed after retries: {sel_err}")
     for attempt in range(1, 6):
         rates = mt5_module.copy_rates_from_pos(SYMBOL, timeframe, 0, CANDLE_COUNT)
         if rates is not None and len(rates) >= 10:
@@ -767,8 +776,14 @@ def run_pipeline(state: dict) -> dict:
     timeframe = resolve_timeframe(mt5_module)
     rates = fetch_rates(mt5_module, timeframe)
     symbol_info = mt5_module.symbol_info(SYMBOL)
-    if symbol_info is None:
-        raise RuntimeError(f"symbol_info({SYMBOL}) is None: {mt5_module.last_error()}")
+    for attempt in range(1, 6):
+        if symbol_info is not None and symbol_info.point:
+            break
+        log(f"symbol_info attempt {attempt}/5 not ready, retrying...")
+        time.sleep(5)
+        symbol_info = mt5_module.symbol_info(SYMBOL)
+    if symbol_info is None or not symbol_info.point:
+        raise RuntimeError(f"symbol_info({SYMBOL}) not available: {mt5_module.last_error()}")
     tick = mt5_module.symbol_info_tick(SYMBOL)
     prompt = build_prompt(symbol_info, tick, rates)
 
