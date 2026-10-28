@@ -35,8 +35,21 @@ jobs:
         shell: pwsh
         run: |
           $installer = Join-Path $env:RUNNER_TEMP 'mt5setup.exe'
-          Invoke-WebRequest 'https://download.mql5.com/cdn/web/metaquotes.softwarecorp/mt5/mt5setup.exe' -OutFile $installer -UseBasicParsing
-          Start-Process -FilePath $installer -ArgumentList '/auto' -Wait
+          $urls = @(
+            'https://download.terminal.free/cdn/web/metaquotes.ltd/mt5/mt5setup.exe',
+            'https://download.mql5.com/cdn/web/metaquotes.softwarecorp/mt5/mt5setup.exe'
+          )
+          $downloaded = $false
+          foreach ($u in $urls) {
+            try {
+              Invoke-WebRequest $u -OutFile $installer -UseBasicParsing -TimeoutSec 180
+              if ((Get-Item $installer).Length -gt 5MB) { $downloaded = $true; Write-Host "downloaded from $u"; break }
+              Write-Host "too small from $u, trying next"
+            } catch { Write-Host "failed from ${u}: $_" }
+          }
+          if (-not $downloaded) { Write-Host '::error::could not download MT5 installer'; exit 1 }
+          $proc = Start-Process -FilePath $installer -ArgumentList '/auto' -Wait -PassThru
+          Write-Host "installer exit code: $($proc.ExitCode)"
           Get-Process terminal64 -ErrorAction SilentlyContinue | Stop-Process -Force
           if (Test-Path 'C:\Program Files\MetaTrader 5\terminal64.exe') {
             Write-Host 'terminal64.exe installed successfully'
