@@ -452,28 +452,110 @@ def resolve_timeframe(mt5_module):
     return tf
 
 
-def fetch_rates(mt5_module, timeframe):
-    # The terminal may still be finishing its startup (recompilation, Market
-    # Watch init) right after login -> 'Terminal: Call failed'. Retry hard.
-    sel_err = None
-    for attempt in range(1, 11):
-        if mt5_module.symbol_select(SYMBOL, True):
-            break
-        sel_err = mt5_module.last_error()
-        log(f"symbol_select attempt {attempt}/10 failed ({sel_err}), retrying...")
+def describe_terminal(mt5_module) -> str:
+    """Compact dump of every terminal_info() field (CI diagnosability)."""
+    term = mt5_module.terminal_info()
+    if term is None:
+        return "terminal_info()=None"
+    try:
+        d = term._asdict()
+    except Exception:
+        d = {f: getattr(term, f) for f in dir(term)
+             if not f.startswith("_") and not callable(getattr(term, f))}
+    return "terminal_info: " + " ".join(f"{k}={v!r}" for k, v in d.items())
+
+
+def wait_symbol_base(mt5_module, seconds: int = 120) -> None:
+    """Waits until the terminal has synced its symbols database.
+
+    A freshly installed terminal must download the full symbol list from the
+    broker on first login; while the base is still empty every
+    symbol_select() fails with 'Terminal: Call failed'. symbols_total()==0
+    is the observable signal for an unsynced base.
+    """
+    deadline = time.time() + seconds
+    total = mt5_module.symbols_total() or 0
+    while total <= 0 and time.time() < deadline:
+        log(f"  symbols base empty (symbols_total={total}) — waiting for sync...")
         time.sleep(5)
-    else:
-        raise RuntimeError(f"symbol_select({SYMBOL}) failed after retries: {sel_err}")
+        total = mt5_module.symbols_total() or 0
+    log(f"symbols_total={total}")
+    if total <= 0:
+        log("  !! symbols base STILL empty after wait — broker sync may have failed")
+        return
+    try:
+        names = mt5_module.symbols_get()
+        if names:
+            all_names = [s.name for s in names]
+            log(f"  first symbols: {all_names[:12]}")
+            eur = [n for n in all_names if n.upper().startswith("EURUSD")]
+            log(f"  EURUSD* symbols ({len(eur)}): {eur[:15]}")
+    except Exception as exc:
+        log(f"  symbols_get() failed: {type(exc).__name__}: {exc}")
+
+
+def resolve_symbol(mt5_module) -> str:
+    """symbol_select with rich diagnostics + broker symbol-name resolution.
+
+    Returns the symbol name actually usable on this broker (handles suffix
+    variants like 'EURUSDm'/'EURUSD.r'). Raises on total failure.
+    """
+    wait_symbol_base(mt5_module)
+    if mt5_module.symbol_select(SYMBOL, True):
+        log(f"symbol_select('{SYMBOL}') OK")
+        return SYMBOL
+    log(f"symbol_select('{SYMBOL}') failed: {mt5_module.last_error()}")
+    cands = []
+    try:
+        names = mt5_module.symbols_get() or []
+        cands = sorted({s.name for s in names if s.name.upper().startswith(SYMBOL.upper())}, key=len)
+        if cands:
+            log(f"  broker symbol candidates: {cands[:12]}")
+    except Exception as exc:
+        log(f"  symbols_get() for candidates failed: {type(exc).__name__}: {exc}")
+    for cand in cands[:3]:
+        if mt5_module.symbol_select(cand, True):
+            log(f"symbol_select('{cand}') OK — using broker-specific name")
+            return cand
+
+    # -- patch interference check: un-hook the IPC pipe and try again with
+    #    truthful (unpatched) status replies --
+    try:
+        import mt5_ipc_patch
+        log(f"IPC patch stats before disable: {mt5_ipc_patch.stats}")
+        if mt5_ipc_patch.disable():
+            log("IPC patch DISABLED — re-testing symbol_select with unpatched pipe...")
+            if mt5_module.symbol_select(SYMBOL, True):
+                log(f"symbol_select('{SYMBOL}') OK after patch disable — patch was interfering")
+                return SYMBOL
+            for cand in cands[:3]:
+                if mt5_module.symbol_select(cand, True):
+                    log(f"symbol_select('{cand}') OK after patch disable")
+                    return cand
+            log(f"  symbol_select still failing unpatched: {mt5_module.last_error()}")
+            log("terminal after disable: " + describe_terminal(mt5_module))
+        else:
+            log("IPC patch disable() returned False (nothing to un-hook?)")
+    except Exception as exc:
+        log(f"patch disable test failed: {type(exc).__name__}: {exc}")
+
+    raise RuntimeError(
+        f"symbol_select failed for {SYMBOL} after diagnostics "
+        f"(candidates: {cands[:12] or 'none'}); last error: {mt5_module.last_error()}"
+    )
+
+
+def fetch_rates(mt5_module, timeframe, symbol: str):
     for attempt in range(1, 6):
-        rates = mt5_module.copy_rates_from_pos(SYMBOL, timeframe, 0, CANDLE_COUNT)
+        rates = mt5_module.copy_rates_from_pos(symbol, timeframe, 0, CANDLE_COUNT)
         if rates is not None and len(rates) >= 10:
             return rates
         log(f"rates attempt {attempt}/5 empty ({mt5_module.last_error()}), retrying...")
         time.sleep(10)
-    raise RuntimeError(f"copy_rates_from_pos failed for {SYMBOL} {TIMEFRAME}: {mt5_module.last_error()}")
+    raise RuntimeError(f"copy_rates_from_pos failed for {symbol} {TIMEFRAME}: {mt5_module.last_error()}")
 
 
-def build_prompt(symbol_info, tick, rates) -> str:
+def build_prompt(symbol, symbol_info, tick, rates) -> str:
     lines = []
     for row in rates:
         dt = datetime.fromtimestamp(int(row["time"]), tz=timezone.utc)
@@ -486,7 +568,7 @@ def build_prompt(symbol_info, tick, rates) -> str:
     if tick is not None and symbol_info.point:
         spread_pts = (tick.ask - tick.bid) / symbol_info.point
     return (
-        f"Market snapshot for {SYMBOL} on {TIMEFRAME} at {utc_now()} UTC.\n"
+        f"Market snapshot for {symbol} on {TIMEFRAME} at {utc_now()} UTC.\n"
         f"Current spread: {spread_pts:.0f} points. Point size: {symbol_info.point}.\n\n"
         f"Latest {len(rates)} candles (UTC, oldest -> newest):\n{candles_text}\n\n"
         "Decide the next action for a NEW position on this symbol. "
@@ -565,27 +647,27 @@ def call_gemini(key_index: int, prompt: str) -> dict:
 # --------------------------------------------------------------------------- #
 # Order execution layer
 # --------------------------------------------------------------------------- #
-def execute_trade(mt5_module, symbol_info, signal: dict):
+def execute_trade(mt5_module, symbol: str, symbol_info, signal: dict):
     action = signal["action"]
     if action == "HOLD":
         log("SIGNAL HOLD -> no order sent")
         return None
 
-    open_positions = mt5_module.positions_get(symbol=SYMBOL) or []
+    open_positions = mt5_module.positions_get(symbol=symbol) or []
     if len(open_positions) >= MAX_OPEN_POSITIONS:
         log(
-            f"{len(open_positions)} open position(s) on {SYMBOL} >= MAX_OPEN_POSITIONS="
+            f"{len(open_positions)} open position(s) on {symbol} >= MAX_OPEN_POSITIONS="
             f"{MAX_OPEN_POSITIONS} -> signal ignored"
         )
         return {"skipped": "open position limit", "open_positions": len(open_positions)}
 
     for _ in range(5):
-        tick = mt5_module.symbol_info_tick(SYMBOL)
+        tick = mt5_module.symbol_info_tick(symbol)
         if tick is not None and tick.ask > 0 and tick.bid > 0:
             break
         time.sleep(2)
     if tick is None or tick.ask <= 0:
-        raise RuntimeError(f"no valid tick for {SYMBOL}")
+        raise RuntimeError(f"no valid tick for {symbol}")
 
     point = symbol_info.point
     digits = symbol_info.digits
@@ -635,7 +717,7 @@ def execute_trade(mt5_module, symbol_info, signal: dict):
 
     request = {
         "action": mt5_module.TRADE_ACTION_DEAL,
-        "symbol": SYMBOL,
+        "symbol": symbol,
         "volume": volume,
         "type": order_type,
         "price": price,
@@ -673,6 +755,7 @@ def execute_trade(mt5_module, symbol_info, signal: dict):
 
     trade_info = {
         "ticket": int(result.order),
+        "symbol": symbol,
         "action": action,
         "volume": float(result.volume if result.volume else volume),
         "price": float(result.price if result.price else price),
@@ -697,11 +780,12 @@ def fmt_trade_table(trade: dict) -> str:
 
 
 def email_trade(signal: dict, trade: dict) -> bool:
+    sym = trade.get("symbol", SYMBOL)
     return send_email(
-        f"✅ Trading bot: {trade['action']} order executed on {SYMBOL}",
+        f"✅ Trading bot: {trade['action']} order executed on {sym}",
         (
             "<h2>📈 Order executed successfully</h2>"
-            f"<p><b>{trade['action']}</b> {trade['volume']} lots {SYMBOL} ({TIMEFRAME})</p>"
+            f"<p><b>{trade['action']}</b> {trade['volume']} lots {sym} ({TIMEFRAME})</p>"
             f"<p>Signal: <code>{json.dumps(signal)}</code></p>"
             f"{fmt_trade_table(trade)}"
             f"<p>UTC time: {utc_now()}</p><p>{run_link()}</p>"
@@ -773,24 +857,27 @@ def run_pipeline(state: dict) -> dict:
     mt5_module.shutdown()  # ensure clean start on reused terminals
     acct = connect_mt5(mt5_module)
 
+    log(describe_terminal(mt5_module))
+    symbol = resolve_symbol(mt5_module)
+
     timeframe = resolve_timeframe(mt5_module)
-    rates = fetch_rates(mt5_module, timeframe)
-    symbol_info = mt5_module.symbol_info(SYMBOL)
+    rates = fetch_rates(mt5_module, timeframe, symbol)
+    symbol_info = mt5_module.symbol_info(symbol)
     for attempt in range(1, 6):
         if symbol_info is not None and symbol_info.point:
             break
         log(f"symbol_info attempt {attempt}/5 not ready, retrying...")
         time.sleep(5)
-        symbol_info = mt5_module.symbol_info(SYMBOL)
+        symbol_info = mt5_module.symbol_info(symbol)
     if symbol_info is None or not symbol_info.point:
-        raise RuntimeError(f"symbol_info({SYMBOL}) not available: {mt5_module.last_error()}")
-    tick = mt5_module.symbol_info_tick(SYMBOL)
-    prompt = build_prompt(symbol_info, tick, rates)
+        raise RuntimeError(f"symbol_info({symbol}) not available: {mt5_module.last_error()}")
+    tick = mt5_module.symbol_info_tick(symbol)
+    prompt = build_prompt(symbol, symbol_info, tick, rates)
 
     gemini_meta = call_gemini(key_index, prompt)
     signal = gemini_meta["signal"]
 
-    trade = execute_trade(mt5_module, symbol_info, signal)
+    trade = execute_trade(mt5_module, symbol, symbol_info, signal)
 
     mt5_module.shutdown()
     return {
@@ -821,6 +908,13 @@ def main() -> int:
     except Exception as exc:
         error = exc
         traceback.print_exc()
+        # Post-mortem: dump the terminal's own journal at failure time
+        # (connection diagnostics only dump inside connect_mt5).
+        try:
+            log("dumping terminal journal for post-mortem...")
+            dump_terminal_logs(80)
+        except Exception:
+            pass
     finally:
         try:
             rotate_state(

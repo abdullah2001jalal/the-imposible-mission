@@ -40,7 +40,12 @@ import sys
 FALLBACK_IAT_RVAS = {"CreateFileW": 0x140B8, "WriteFile": 0x140F0, "ReadFile": 0x140F8}
 
 applied = False
+disabled = False
 status = "not applied (apply() never ran)"
+# Observability: how many 12-byte 0x6d status replies the pipe delivered and
+# which ORIGINAL status bytes they carried (0x01=INITIALIZING, 0x02=READY).
+stats = {"status_replies": 0, "status_counts": {}, "rewrites": 0}
+_state = {}  # h_mod / rvas / real / cbs — needed by disable()
 
 
 def _dbg(msg: str) -> None:
@@ -168,8 +173,13 @@ def apply() -> bool:
             try:
                 if res and handle in pipe_handles and read and read.contents.value == 12:
                     data = (ctypes.c_uint8 * 12).from_address(buf)
-                    if data[0] == 0x6D and data[8] != 0x02:
-                        data[8] = 0x02  # STATUS_INITIALIZING -> STATUS_READY
+                    if data[0] == 0x6D:
+                        orig = int(data[8])
+                        stats["status_replies"] += 1
+                        stats["status_counts"][orig] = stats["status_counts"].get(orig, 0) + 1
+                        if orig != 0x02:
+                            data[8] = 0x02  # STATUS_INITIALIZING -> STATUS_READY
+                            stats["rewrites"] += 1
             except Exception:
                 pass
             return res
@@ -192,10 +202,55 @@ def apply() -> bool:
             _dbg(f"hook installed: {name}")
 
         applied = True
+        _state.update({
+            "h_mod": int(h_mod),
+            "rvas": dict(rvas),
+            "real": {
+                "CreateFileW": ctypes.cast(real_CreateFileW, ctypes.c_void_p).value,
+                "ReadFile": ctypes.cast(real_ReadFile, ctypes.c_void_p).value,
+            },
+            "cbs": [cb_CreateFileW, cb_ReadFile],  # keep alive for process lifetime
+        })
         pyd_name = os.path.basename(pyd) if pyd else "_core*.pyd"
         rva_text = ", ".join(f"{k}=0x{v:x}" for k, v in sorted(rvas.items()))
         status = f"ACTIVE (hooked {pyd_name}; IAT RVAs: {rva_text})"
         return True
     except Exception as exc:
         status = f"patch FAILED: {type(exc).__name__}: {exc}"
+        return False
+
+
+def disable() -> bool:
+    """Un-hook the IAT: restore the original ReadFile/CreateFileW pointers so
+    status replies reach the extension unmodified (truthful diagnostics).
+
+    Returns True if hooks were removed, False if there was nothing to remove.
+    """
+    global disabled, status
+    if disabled:
+        return True
+    if not applied or not _state.get("h_mod"):
+        return False
+    try:
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        vp = kernel32.VirtualProtect
+        vp.argtypes = [
+            ctypes.c_void_p, ctypes.c_size_t, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD),
+        ]
+        vp.restype = wintypes.BOOL
+        h_mod = _state["h_mod"]
+        for name in ("ReadFile", "CreateFileW"):
+            p = h_mod + int(_state["rvas"][name])
+            old = wintypes.DWORD()
+            if not vp(p, 8, 0x40, ctypes.byref(old)):
+                _dbg(f"disable: VirtualProtect({name}) err={ctypes.get_last_error()}")
+                return False
+            ctypes.c_uint64.from_address(h_mod + int(_state["rvas"][name])).value = _state["real"][name]
+            vp(p, 8, old.value, ctypes.byref(old))
+            _dbg(f"hook removed: {name}")
+        disabled = True
+        status = "DISABLED (original IAT entries restored)"
+        return True
+    except Exception as exc:
+        _dbg(f"disable error: {type(exc).__name__}: {exc}")
         return False
