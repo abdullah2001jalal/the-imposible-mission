@@ -184,13 +184,32 @@ jobs:
           if ($changed -like '*state.json*') {
             git commit -m ("state: rotation update " + (Get-Date -AsUTC -Format 'yyyy-MM-ddTHH:mmZ')) | Out-Null
           }
-          for ($i = 0; $i -lt 3; $i++) {
-            git pull --rebase origin master 2>$null | Out-Null
+          $pushed = $false
+          for ($i = 1; $i -le 5; $i++) {
+            # Rebase onto latest master. Two runs racing on state.json (external
+            # ping + chain) can conflict -> EXPECTED: resolve in favor of OURS
+            # (this run rotated state last), handle the empty-commit case, push.
+            git fetch origin master 2>$null | Out-Null
+            $behind = git rev-list --count HEAD..origin/master 2>$null
+            if ("$behind" -ne '' -and [int]$behind -gt 0) {
+              git rebase origin/master 2>$null | Out-Null
+              if ($LASTEXITCODE -ne 0) {
+                $conflicts = (git diff --name-only --diff-filter=U 2>$null) -join ' '
+                if ("$conflicts" -like '*state.json*') {
+                  git checkout --theirs -- state.json 2>$null | Out-Null
+                  git add state.json
+                  git -c core.editor=true rebase --continue 2>$null | Out-Null
+                  if ($LASTEXITCODE -ne 0) { git rebase --skip 2>$null | Out-Null }
+                } else {
+                  git rebase --abort 2>$null | Out-Null
+                }
+              }
+            }
             git push "https://x-access-token:$env:DEPLOY_PAT@github.com/$env:GITHUB_REPOSITORY.git" master 2>&1 | ForEach-Object { "$_" }
-            if ($LASTEXITCODE -eq 0) { Write-Host 'state.json pushed'; break }
-            Start-Sleep -Seconds 8
+            if ($LASTEXITCODE -eq 0) { Write-Host "state.json pushed (attempt $i)"; $pushed = $true; break }
+            Start-Sleep -Seconds 10
           }
-          if ($LASTEXITCODE -ne 0) { Write-Host '::error::failed to persist state.json'; exit 1 }
+          if (-not $pushed) { Write-Host '::error::failed to persist state.json after 5 attempts'; exit 1 }
 
       - name: Email operator on any pipeline failure
         if: failure()
