@@ -78,12 +78,19 @@ def _iat_rvas(pyd: str) -> dict:
         pe.parse_data_directories(
             directories=[pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_IMPORT"]]
         )
+        # NOTE: pefile's imp.address is ImageBase + IAT-slot RVA (a full VA),
+        # not a bare RVA -- normalize it, and keep only in-image values.
+        image_base = int(pe.OPTIONAL_HEADER.ImageBase)
+        size_of_image = int(pe.OPTIONAL_HEADER.SizeOfImage)
         rvas = {}
         for entry in getattr(pe, "DIRECTORY_ENTRY_IMPORT", []):
             for imp in entry.imports:
                 name = (imp.name or b"").decode("ascii", "replace")
                 if name in FALLBACK_IAT_RVAS and name not in rvas:
-                    rvas[name] = imp.address
+                    addr = int(imp.address)
+                    rva = addr - image_base if addr >= image_base else addr
+                    if 0 <= rva < size_of_image:
+                        rvas[name] = rva
         if {"CreateFileW", "ReadFile"} <= set(rvas):
             return rvas
     except Exception:
