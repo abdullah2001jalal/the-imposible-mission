@@ -4,7 +4,7 @@ on:
   schedule:
     # Off-peak minutes (avoid :00/:15/:30/:45 congestion where GitHub is known
     # to delay/drop scheduled runs; docs recommend avoiding round times).
-    - cron: '7,22,37,52 * * * *'
+    - cron: '8,23,38,53 * * * *'
   workflow_dispatch:
     inputs:
       notify_boot:
