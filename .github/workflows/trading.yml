@@ -81,7 +81,6 @@ jobs:
 
       - name: Run trading bot
         shell: pwsh
-        continue-on-error: true
         env:
           GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
           GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
@@ -97,7 +96,8 @@ jobs:
           NOTIFY_BOOT: ${{ inputs.notify_boot == true }}
           PYTHONUTF8: '1'
           PYTHONIOENCODING: utf-8
-        run: python bot.py
+          PYTHONFAULTHANDLER: '1'
+        run: python -u bot.py
 
       - name: Commit state.json (key rotation persistence)
         if: always()

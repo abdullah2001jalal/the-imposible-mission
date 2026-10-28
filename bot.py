@@ -673,11 +673,14 @@ def run_pipeline(state: dict) -> dict:
     # (see mt5_ipc_patch.py for details).
     try:
         import mt5_ipc_patch
+        log("IPC patch module imported OK; calling apply()...")
         _patched = mt5_ipc_patch.apply()
         log(f"IPC patch: applied={_patched} | {mt5_ipc_patch.status}")
     except Exception as exc:
         log(f"IPC patch not applied: {type(exc).__name__}: {exc}")
+    log("importing MetaTrader5...")
     import MetaTrader5 as mt5_module
+    log("MetaTrader5 imported OK")
 
     key_index = int(state.get("key_index", 0)) % len(GEMINI_KEYS)
     run_position = int(state.get("run_position", 0))
@@ -714,6 +717,7 @@ def run_pipeline(state: dict) -> dict:
 
 def main() -> int:
     force_utf8_stdio()
+    log(f"bot starting (python {sys.version.split()[0]}, {sys.platform})")
     if not GEMINI_KEYS:
         send_email(
             "🚨 Trading bot ERROR: no Gemini keys",

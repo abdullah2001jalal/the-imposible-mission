@@ -43,6 +43,15 @@ applied = False
 status = "not applied (apply() never ran)"
 
 
+def _dbg(msg: str) -> None:
+    """Crash-proof breadcrumb to stderr (survives partial process death)."""
+    try:
+        sys.stderr.write(f"[ipc-patch] {msg}\n")
+        sys.stderr.flush()
+    except Exception:
+        pass
+
+
 def _pyd_path() -> str:
     """Locate the on-disk _core*.pyd of the installed MetaTrader5 package."""
     try:
@@ -88,7 +97,9 @@ def apply() -> bool:
     if applied:
         return True
     try:
+        _dbg("apply() called; importing MetaTrader5...")
         import MetaTrader5 as _mt5  # noqa: F401 -- ensures the pyd is loaded
+        _dbg("MetaTrader5 import OK")
 
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
         get_mod = kernel32.GetModuleHandleW
@@ -106,6 +117,10 @@ def apply() -> bool:
             return False
 
         rvas = _iat_rvas(pyd)
+        _dbg(
+            f"pyd={os.path.basename(pyd) if pyd else '?'} handle=0x{int(h_mod):x} "
+            f"rvas={{ {', '.join(f'{k}: 0x{v:x}' for k, v in sorted(rvas.items()))} }}"
+        )
 
         virtual_protect = kernel32.VirtualProtect
         virtual_protect.argtypes = [
@@ -163,9 +178,11 @@ def apply() -> bool:
             p = h_mod + rvas[name]
             if not virtual_protect(p, 8, PAGE_EXECUTE_READWRITE, ctypes.byref(old_prot)):
                 status = f"patch FAILED: VirtualProtect({name}) error {ctypes.get_last_error()}"
+                _dbg(status)
                 return False
             slot(rvas[name]).value = ctypes.cast(cb, ctypes.c_void_p).value
             virtual_protect(p, 8, old_prot.value, ctypes.byref(old_prot))
+            _dbg(f"hook installed: {name}")
 
         applied = True
         pyd_name = os.path.basename(pyd) if pyd else "_core*.pyd"
