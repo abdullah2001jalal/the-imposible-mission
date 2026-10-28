@@ -232,18 +232,52 @@ def find_terminal_exe():
     return None
 
 
-def write_login_config() -> str:
+def write_login_config(path=None) -> str:
+    """MT5 startup config with auto-login.
+
+    Uses the official [Common] keys (Login/Password/Server/ProxyEnable/
+    NewsEnable/KeepPrivate) with CRLF line endings -- Windows INI parsers
+    ignore bare-LF files, which silently skips the auto-login.
+    """
     ini = (
-        "[Common]\n"
-        f"Login={EXNESS_LOGIN}\n"
-        f"Password={EXNESS_PASSWORD}\n"
-        f"Server={EXNESS_SERVER}\n"
-        "News=0\n"
+        "[Common]\r\n"
+        f"Login={EXNESS_LOGIN}\r\n"
+        f"Password={EXNESS_PASSWORD}\r\n"
+        f"Server={EXNESS_SERVER}\r\n"
+        "ProxyEnable=0\r\n"
+        "CertInstall=0\r\n"
+        "NewsEnable=0\r\n"
+        "KeepPrivate=1\r\n"
+        "\r\n"
+        "[Experts]\r\n"
+        "AllowLiveTrading=1\r\n"
+        "AllowDllImport=0\r\n"
+        "Enabled=1\r\n"
+        "Account=0\r\n"
+        "Profile=0\r\n"
     )
-    path = os.path.join(os.environ.get("RUNNER_TEMP") or os.getcwd(), "mt5login.ini")
-    with open(path, "w", encoding="ascii", errors="replace") as fh:
+    if path is None:
+        path = os.path.join(os.environ.get("RUNNER_TEMP") or os.getcwd(), "mt5login.ini")
+    with open(path, "w", encoding="ascii", errors="replace", newline="") as fh:
         fh.write(ini)
     return path
+
+
+def write_data_folder_config():
+    """Also write the login config into the terminal data folder's own
+    config/common.ini (the DEFAULT config the terminal reads even without
+    /config:). Returns the data-folder path or None."""
+    import glob
+    base = os.path.join(os.environ.get("APPDATA", ""), "MetaQuotes", "Terminal")
+    for d in glob.glob(os.path.join(base, "*")):
+        if os.path.isdir(os.path.join(d, "config")):
+            try:
+                write_login_config(os.path.join(d, "config", "common.ini"))
+                log(f"data-folder common.ini written: {d}")
+                return d
+            except Exception as exc:
+                log(f"data-folder common.ini write failed ({exc})")
+    return None
 
 
 def launch_terminal(config_path=None, portable=False) -> None:
@@ -260,37 +294,58 @@ def launch_terminal(config_path=None, portable=False) -> None:
     subprocess.Popen(args, cwd=os.path.dirname(exe))
 
 
-def dump_terminal_logs(tail: int = 35) -> None:
-    """Print the tail of the terminal's own logs for CI diagnosis."""
+def _read_mt5_log(fp: str) -> str:
+    """Terminal journals are UTF-16LE (usually with BOM); decode correctly."""
+    raw = open(fp, "rb").read()
+    if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        return raw.decode("utf-16", "replace")
+    sample = raw[:512]
+    if sample and sample.count(0) > len(sample) * 0.3:
+        return raw.decode("utf-16-le", "replace")
+    return raw.decode("utf-8", "replace")
+
+
+def dump_terminal_logs(tail: int = 60) -> None:
+    """Print the tail of the terminal's own journal (skips metaeditor logs)."""
     base = os.path.join(os.environ.get("APPDATA", ""), "MetaQuotes", "Terminal")
-    dumped = 0
-    if os.path.isdir(base):
-        for data_dir in sorted(os.listdir(base)):
-            logdir = os.path.join(base, data_dir, "logs")
-            if not os.path.isdir(logdir):
+    if not os.path.isdir(base):
+        log("no terminal data dir found")
+        return
+    for data_dir in sorted(os.listdir(base)):
+        logdir = os.path.join(base, data_dir, "logs")
+        if not os.path.isdir(logdir):
+            continue
+        dumped = 0
+        for name in sorted(os.listdir(logdir), reverse=True):
+            if dumped >= 1:
+                break
+            # main journal files are named like 20261028.log
+            if not (name.startswith("20") and name.endswith(".log")):
                 continue
-            for name in sorted(os.listdir(logdir), reverse=True):
-                if dumped >= 2:
-                    return
-                fp = os.path.join(logdir, name)
-                try:
-                    if os.path.getsize(fp) == 0:
-                        continue
-                    log(f"--- terminal log {data_dir}/{name} (tail {tail}) ---")
-                    with open(fp, encoding="utf-8", errors="replace") as fh:
-                        for line in fh.read().splitlines()[-tail:]:
-                            log("  " + line)
-                    dumped += 1
-                except Exception as exc:
-                    log(f"  (log read failed: {exc})")
+            fp = os.path.join(logdir, name)
+            try:
+                if os.path.getsize(fp) == 0:
+                    continue
+                text = _read_mt5_log(fp)
+                lines = [l.rstrip() for l in text.splitlines() if l.strip()]
+                log(f"--- terminal journal {data_dir}/{name} (tail {tail}) ---")
+                for line in lines[-tail:]:
+                    log("  " + line)
+                dumped += 1
+            except Exception as exc:
+                log(f"  (log read failed: {exc})")
 
 
 def wait_ready(mt5_module, seconds: int = 90):
     """Polls until the terminal is genuinely connected to the broker.
 
     Returns the account_info() namedtuple on success, None on timeout.
+    Logs a compact snapshot of terminal/account state on every change so CI
+    failures are diagnosable.
     """
     deadline = time.time() + seconds
+    last_snapshot = None
+    term = acct = None
     while time.time() < deadline:
         term = mt5_module.terminal_info()
         acct = mt5_module.account_info()
@@ -300,7 +355,17 @@ def wait_ready(mt5_module, seconds: int = 90):
                 f"account={acct.name} balance={acct.balance} {acct.currency}"
             )
             return acct
+        snapshot = (
+            f"terminal_info={'None' if term is None else 'present'} "
+            f"connected={getattr(term, 'connected', None)} "
+            f"trade_allowed={getattr(term, 'trade_allowed', None)} "
+            f"account_info={'None' if acct is None else f'login={acct.login} server={acct.server}'}"
+        )
+        if snapshot != last_snapshot:
+            log(f"  wait_ready: {snapshot}")
+            last_snapshot = snapshot
         time.sleep(3)
+    log(f"  wait_ready TIMEOUT after {seconds}s: terminal_info={term!r} account_info={acct!r}")
     return None
 
 
@@ -338,6 +403,7 @@ def connect_mt5(mt5_module) -> dict:
                 # timeout is in MILLISECONDS (official docs: default 60000 = 60s)
                 ok = mt5_module.initialize(path=exe, timeout=90000, **creds)
             elif mode.startswith("config"):
+                write_data_folder_config()  # also seed the terminal's default common.ini
                 launch_terminal(write_login_config(), portable=portable)
                 time.sleep(30)
                 ok = (
@@ -352,7 +418,9 @@ def connect_mt5(mt5_module) -> dict:
                 if acct is None:
                     # Attached but no broker connection yet -> explicit login
                     log("  -> attach OK but not connected; explicit mt5.login()...")
-                    if mt5_module.login(login_int, password=EXNESS_PASSWORD, server=EXNESS_SERVER):
+                    login_ok = mt5_module.login(login_int, password=EXNESS_PASSWORD, server=EXNESS_SERVER)
+                    log(f"  -> mt5.login() returned {login_ok}, last_error={mt5_module.last_error()}")
+                    if login_ok:
                         acct = wait_ready(mt5_module, 60)
                 if acct is not None:
                     return {"login": acct.login, "server": acct.server, "balance": acct.balance}
