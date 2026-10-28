@@ -4,6 +4,9 @@ on:
   schedule:
     # Off-peak minutes (avoid :00/:15/:30/:45 congestion where GitHub is known
     # to delay/drop scheduled runs; docs recommend avoiding round times).
+    # NOTE: this cron has never fired for this repo (GitHub scheduler bug
+    # actions/runner#4210). It is kept as a chain-restarter/watchdog: the real
+    # 24/7 engine is the "Re-arm next run" step (self-perpetuating dispatch).
     - cron: '8,23,38,53 * * * *'
   workflow_dispatch:
     inputs:
@@ -23,10 +26,70 @@ concurrency:
 jobs:
   trade:
     runs-on: windows-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------
+      # SELF-PERPETUATING SCHEDULER — bypasses GitHub's broken cron
+      # (actions/runner#4210: scheduled runs silently never fire).
+      # Each run re-arms the NEXT run via the workflow_dispatch API, so the
+      # chain continues 24/7 independently of GitHub's scheduler. Placed
+      # EARLY (right after checkout, before the fragile MT5 install) so the
+      # chain survives install/bot crashes and runner hangs: a hung job is
+      # killed by timeout-minutes and its already-queued successor proceeds.
+      # Chain dedupe: if another run is already queued/in progress (cron
+      # recovered, external scheduler ping, manual test), it becomes the
+      # next link and we skip re-arming -> exactly one chain, never doubled.
+      # Free minutes: this repo is PUBLIC, so runner minutes are unlimited.
+      # -----------------------------------------------------------------
+      - name: Re-arm next run (self-perpetuation; cron bug 4210 workaround)
+        if: always()
+        shell: pwsh
+        env:
+          DEPLOY_PAT: ${{ secrets.DEPLOY_PAT }}
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $headers = @{
+            Authorization = "Bearer $env:DEPLOY_PAT"
+            Accept        = 'application/vnd.github+json'
+            'User-Agent'  = 'trading-bot-selfarm/1.0'
+          }
+          $pending = 0
+          try {
+            $runs = Invoke-RestMethod "https://api.github.com/repos/$env:GITHUB_REPOSITORY/actions/runs?per_page=20" -Headers $headers
+            foreach ($r in $runs.workflow_runs) {
+              if ([int64]$r.id -eq [int64]$env:GITHUB_RUN_ID) { continue }
+              if (@('queued','waiting','pending','in_progress') -contains $r.status) { $pending++ }
+            }
+            Write-Host "pending successor runs: $pending"
+          } catch { Write-Host "run-list check failed: $($_.Exception.Message)" }
+          if ($pending -gt 0) {
+            Write-Host 'successor already pending -> not re-arming (chain dedupe)'
+            exit 0
+          }
+          # Keep ~15-minute cadence: ~6-8 min of work after this step, so
+          # sleep ~8 min here, then dispatch the next run.
+          Start-Sleep -Seconds 480
+          $url = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/actions/workflows/trading.yml/dispatches"
+          $body = '{"ref":"' + $env:GITHUB_REF_NAME + '","inputs":{"notify_boot":false}}'
+          $ok = $false
+          for ($i = 1; $i -le 3; $i++) {
+            try {
+              Invoke-RestMethod $url -Method Post -Body $body -ContentType 'application/json' -Headers $headers | Out-Null
+              $ok = $true
+              Write-Host "next run dispatched (self-perpetuation OK, attempt $i)"
+              break
+            } catch {
+              Write-Host "dispatch attempt $i failed: $($_.Exception.Message)"
+              Start-Sleep -Seconds 15
+            }
+          }
+          if (-not $ok) {
+            Write-Host '::error::FAILED to re-arm the next run — the run chain will stop'
+            exit 1
+          }
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
