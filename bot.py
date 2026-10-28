@@ -226,6 +226,10 @@ def terminal_running() -> bool:
 
 
 def find_terminal_exe():
+    # Workflow exports the actually-installed path via MT5_PATH (GITHUB_ENV)
+    env_path = os.environ.get("MT5_PATH", "").strip()
+    if env_path and os.path.exists(env_path):
+        return env_path
     for path in MT5_INSTALL_PATHS:
         if os.path.exists(path):
             return path

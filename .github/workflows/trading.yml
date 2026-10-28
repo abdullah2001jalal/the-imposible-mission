@@ -34,41 +34,42 @@ jobs:
       - name: Install MetaTrader 5 terminal (silent)
         shell: pwsh
         run: |
+          function Find-Terminal {
+            Get-ChildItem 'C:\Program Files', 'C:\Program Files (x86)' -Directory -ErrorAction SilentlyContinue |
+              ForEach-Object { Join-Path $_.FullName 'terminal64.exe' } |
+              Where-Object { Test-Path $_ } |
+              Select-Object -First 1
+          }
           $installer = Join-Path $env:RUNNER_TEMP 'mt5setup.exe'
-          # Exness-branded terminal FIRST: it ships Exness' trade servers in its
-          # local server list, so "Exness-MT5Trial15" resolves locally and the
-          # startup-config auto-login connects directly (no MetaQuotes index).
+          # Exness-branded terminal first (local Exness server list -> direct
+          # auto-login); proven MetaQuotes web installer as fallback.
           $urls = @(
             'https://download.terminal.free/cdn/web/exness.technologies.ltd/mt5/exness5setup.exe',
             'https://download.terminal.free/cdn/web/metaquotes.ltd/mt5/mt5setup.exe'
           )
-          $downloaded = $false
+          $installed = $null
           foreach ($u in $urls) {
             try {
               Invoke-WebRequest $u -OutFile $installer -UseBasicParsing -TimeoutSec 180
-              if ((Get-Item $installer).Length -gt 3MB) { $downloaded = $true; Write-Host "downloaded from $u"; break }
-              Write-Host "too small from $u, trying next"
-            } catch { Write-Host "failed from ${u}: $_" }
+              if ((Get-Item $installer).Length -lt 3MB) { Write-Host "too small from $u, trying next"; continue }
+              Write-Host "downloaded from $u"
+            } catch { Write-Host "failed from ${u}: $_"; continue }
+            $proc = Start-Process -FilePath $installer -ArgumentList '/auto' -Wait -PassThru
+            Write-Host "installer exit code: $($proc.ExitCode)"
+            Start-Sleep -Seconds 5
+            $installed = Find-Terminal
+            if ($installed) { break }
+            Write-Host "no terminal64.exe after this installer, trying next"
           }
-          if (-not $downloaded) { Write-Host '::error::could not download MT5 installer'; exit 1 }
-          $proc = Start-Process -FilePath $installer -ArgumentList '/auto' -Wait -PassThru
-          Write-Host "installer exit code: $($proc.ExitCode)"
-          $candidates = @(
-            'C:\Program Files\MetaTrader 5\terminal64.exe',
-            'C:\Program Files\Exness MT5\terminal64.exe'
-          )
-          $installed = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $installed) {
-            Write-Host '::error::terminal64.exe NOT found after silent install'
-            exit 1
-          }
+          if (-not $installed) { Write-Host '::error::terminal64.exe NOT found after all installers'; exit 1 }
           Write-Host "terminal64.exe installed at: $installed"
           $ver = (Get-Item $installed).VersionInfo.FileVersion
           Write-Host "installed terminal build: $ver"
+          "MT5_PATH=$installed" | Add-Content -Path $env:GITHUB_ENV
 
           # NOTE: no CDN blocking / build pinning. The Python-side IAT patch
           # (mt5_ipc_patch.py) resolves the IPC handshake for any terminal
-          # build, and broker-server name resolution needs MetaQuotes' index.
+          # build, and server-name resolution needs MetaQuotes' index.
           Get-ChildItem "$env:APPDATA\MetaQuotes\Terminal" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
             $logdir = Join-Path $_.FullName 'logs'
             if (Test-Path $logdir) {
