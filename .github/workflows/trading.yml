@@ -122,8 +122,8 @@ jobs:
             git commit -m ("state: rotation update " + (Get-Date -AsUTC -Format 'yyyy-MM-ddTHH:mmZ')) | Out-Null
           }
           for ($i = 0; $i -lt 3; $i++) {
-            git pull --rebase origin main 2>$null | Out-Null
-            git push "https://x-access-token:$env:DEPLOY_PAT@github.com/$env:GITHUB_REPOSITORY.git" main 2>&1 | ForEach-Object { "$_" }
+            git pull --rebase origin master 2>$null | Out-Null
+            git push "https://x-access-token:$env:DEPLOY_PAT@github.com/$env:GITHUB_REPOSITORY.git" master 2>&1 | ForEach-Object { "$_" }
             if ($LASTEXITCODE -eq 0) { Write-Host 'state.json pushed'; break }
             Start-Sleep -Seconds 8
           }
