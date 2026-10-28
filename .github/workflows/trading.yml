@@ -2,7 +2,9 @@ name: Trading Bot — EURUSD M15 (Exness MT5 + Gemini 3.8 Flash)
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    # Off-peak minutes (avoid :00/:15/:30/:45 congestion where GitHub is known
+    # to delay/drop scheduled runs; docs recommend avoiding round times).
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
     inputs:
       notify_boot:
