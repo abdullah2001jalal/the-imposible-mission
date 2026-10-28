@@ -58,7 +58,7 @@ GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash").strip()
 GEMINI_FALLBACK_MODELS = [
     m.strip()
     for m in os.environ.get(
-        "GEMINI_MODEL_FALLBACKS", "gemini-3.7-flash,gemini-3.5-flash,gemini-flash-latest"
+        "GEMINI_MODEL_FALLBACKS", "gemini-3.7-flash,gemini-3.6-flash"
     ).split(",")
     if m.strip()
 ]
