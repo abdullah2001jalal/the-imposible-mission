@@ -1,0 +1,6 @@
+{"t": "2026-10-29 12:54:18", "ev": "cycle", "mode": "demo", "open": 1, "equity": 9995.94, "day_pnl": 0.0, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-29 12:54:18", "ev": "adopted", "ticket": 2656711068, "pair": "EURUSD", "entry": 1.1140800000000002, "sl": 1.11548, "note": "orphan adopted from previous engine"}
+{"t": "2026-10-29 12:54:19", "ev": "manage", "ticket": "2656711068", "pair": "EURUSDm", "plan": "HOLD", "r": 0.34, "why": "R=0.34"}
+{"t": "2026-10-29 12:54:19", "ev": "no_signal", "pair": "GBPUSD"}
+{"t": "2026-10-29 12:54:19", "ev": "no_signal", "pair": "XAUUSD"}
+{"t": "2026-10-29 12:54:21", "ev": "no_signal", "pair": "BTCUSD"}

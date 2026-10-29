@@ -1,13 +1,27 @@
 {
-  "key_index": 1,
-  "run_position": 1,
-  "total_runs": 49,
-  "last_run_utc": "2026-10-29 11:56:54",
-  "last_run_result": {
-    "account": "{'login': 474804202, 'server': 'Exness-MT5Trial15', 'balance': 9995.56}",
-    "gemini": "{'signal': {'action': 'HOLD', 'sl_points': 150, 'tp_points': 300}, 'model': 'gemini-3.8-flash', 'key_slot': 4}",
-    "signal": "{'action': 'HOLD', 'sl_points': 150, 'tp_points': 300}",
-    "trade": null,
-    "utc": "2026-10-29 11:56:54"
-  }
+  "schema": "sentinel-v2",
+  "updated": "2026-10-29 12:54:21",
+  "day": {
+    "date": "2026-10-29",
+    "start_equity": 9995.94
+  },
+  "summary_sent_day": "",
+  "last_bar": {
+    "GBPUSD": 1793277900,
+    "XAUUSD": 1793277900,
+    "BTCUSD": 1793277900
+  },
+  "positions": {
+    "2656711068": {
+      "pair": "EURUSD",
+      "symbol": "EURUSDm",
+      "entry": 1.1140800000000002,
+      "stop_points": 0.0013999999999998458,
+      "be_moved": false,
+      "opened": "2026-10-29 05:27:04",
+      "adopted": true
+    }
+  },
+  "closed_log": [],
+  "total_cycles": 1
 }
