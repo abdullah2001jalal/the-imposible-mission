@@ -14,7 +14,8 @@ halt: true
 mode: demo
 
 # الأزواج (اللاحقة m / غيرها تُحتَل تلقائياً من المنصة — لا تكتب اللاحق)
-pairs: [EURUSD, GBPUSD, USDJPY, XAUUSD, BTCUSD]
+# USDJPY حُذف: لم يتأهل في أي تركيبة من 192 اختباراً خلفياً (12:35 2026-10-29)
+pairs: [EURUSD, GBPUSD, XAUUSD, BTCUSD]
 
 timeframe: M15
 
@@ -27,8 +28,13 @@ strategy:
   rr_take: 2.0               # الهدف = 2R
   be_at_r: 1.0               # رفع الستوب إلى التعادل عند +1R
   exit_flip_trend: true      # إغلاق فوري عند انقلاب الترند ضد الموضع
-  overrides: {}              # ضبط لكل زوج يسوى فوق الأساس:
-                             # overrides: {BTCUSD: {breakout_lookback: 48}}
+  # overrides لكل زوج تُمزَج فوق الأساس. المصدر: سويب 192 تركيبة على
+  # تاريخ حقيقي 120 يوماً + تحقق تستندي بالنصفين (12:35 2026-10-29).
+  overrides:
+    EURUSD: {breakout_lookback: 24, sl_atr: 1.0, rr_take: 3.0, be_at_r: 1.0, exit_flip_trend: true}
+    GBPUSD: {breakout_lookback: 84, sl_atr: 3.0, rr_take: 3.0, be_at_r: 99.0, exit_flip_trend: false}
+    XAUUSD: {breakout_lookback: 48, sl_atr: 2.0, rr_take: 1.5, be_at_r: 99.0, exit_flip_trend: true}
+    BTCUSD: {breakout_lookback: 24, sl_atr: 3.0, rr_take: 3.0, be_at_r: 1.0, exit_flip_trend: true}
 
 risk:
   risk_per_trade: 0.006      # 0.6% من حقوق الملكية لكل ضبوة
