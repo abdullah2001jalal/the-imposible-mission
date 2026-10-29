@@ -1,40 +1,91 @@
-# The Impossible Mission — Auto-Trading Bot
+# Sentinel v2 — محرك تداول ذاتي 24/7
 
-**Exness MT5 (demo/trial) + Gemini 3.8 Flash (5-key rotation) + Resend alerts, running 24/7 for free on GitHub Actions.**
+نسخة معاد هندستها بالكامل من الصفر. لا يوجد أي LLM في مسار التداول نهائياً.
 
-## How it works
+## لماذا أعيدت الهندسة؟
 
-- Runs every **~15 minutes** on `windows-latest` via [`.github/workflows/trading.yml`](.github/workflows/trading.yml).
-- **Scheduling = self-perpetuating chain**: GitHub's native cron scheduler is unreliable
-  ([actions/runner#4210](https://github.com/actions/runner/issues/4210) — scheduled runs can silently never fire).
-  Instead, every run **re-arms the next run itself**: a step right after checkout waits ~8 minutes and then calls the
-  `workflow_dispatch` API, so the chain continues 24/7 independently of GitHub's scheduler. The step is placed *before*
-  the fragile MT5 install (a crashed run still leaves its successor queued) and includes chain de-duplication
-  (if another run is already queued — cron, an external scheduler ping, or a manual test — it becomes the next link,
-  so there is always exactly one chain). The `cron` trigger in the workflow is kept only as a chain-restarter watchdog.
-- Each run installs an MT5 terminal, connects to `Exness-MT5Trial15`, fetches the latest **20 M15 candles** for **EURUSD**, asks **`gemini-3.8-flash`** (temperature 0.1) for a strict-JSON signal
-  `{"action": "BUY/SELL/HOLD", "sl_points": 150, "tp_points": 300}`,
-  and places the order through `mt5.order_send` with broker-side SL/TP.
-- **Symbol auto-resolution**: Exness names the instrument `EURUSDm` (note the suffix). The bot calls `symbols_total()`/`symbols_get()` and automatically resolves and uses the broker-specific name — no manual config needed if the broker renames symbols.
-- **5-key rotation engine**: `state.json` is committed back to this repo after every run
-  (race-proof push: rebase onto latest master, conflicts resolved in favor of the fresher state, 5 attempts),
-  so the engine knows which Gemini key slot is active (8 runs = ~2 hours per key, then rotates 1→2→3→4→5→1… forever).
-- **Alert policy (Resend, `onboarding@resend.dev`)**: email is sent **only** on errors (any stage), on successful order executions, and on successful boot verification. Routine/quiet runs stay silent. Market-closed responses are logged, not emailed, to avoid weekend spam.
+النسخة القديمة (v1) كانت تعتمد على LLM يرى 20 شمعة كل 15 دقيقة **بلا ذاكرة**،
+فقلب الاتجاه ذهاباً وإياباً (بيع → بيع → شراء → بيع) وفتح صفقات بلا إدارة
+حقيقية. تم تعطيلها نهائياً بتاريخ 2026-10-29.
 
-## Repository secrets (set via GitHub → Settings → Secrets → Actions)
+**مبدأ v2**: إشارات مبرمَجة قابلة للفحص رقمياً (اختبار خلفي قبل التشغيل)،
+إدارة حقيقية للصفقات المفتوحة، وكل خطوة تُحفَّظ في المستودع بحيث يكون
+الإقلاع الجديد استكمالاً وليس بداية من الصفر.
 
-| Secret | Purpose |
+## كيف يعمل
+
+1. كل ~15 دقيقة يعمل workflow `trading.yml` على `windows-latest`.
+2. يقرأ `config.yml` (لوحة التحكم). إن كان `halt: true` يتوقف فوراً،
+   وتموت السلسلة الذاتية بدورة واحدة.
+3. يتصل بالوسيط (Exness MT5). يتبنى الصفقات المفتوحة التي تركها v1 حتّى
+   يُدارها بنفس القواعد.
+4. لكل زوج من `pairs`: الترند عبر EMA50/200 ثم اختراق Donchian:
+   - BUY: ترند صاعد + السعر يخترق أعلى 24 شمعة M15 سابقة.
+   - SELL: ترند هابط + السعر يخترق أدناها.
+   - وقف الخسارة = 1.5 × ATR، الهدف = 2R، رفع الستوب للتعادل عند +1R.
+5. **إدارة في كل دورة**: انقلاب الترند ضد الموضع → إغلاق فوري؛
+   وصول +1R → الستوب يرتفع للتعادل.
+6. **حدود الخطر**: 0.6% من حقوق الملكية لكل صفقة، 4 مواضع كحد أقصى،
+   واحدة لكل زوج، توقف يومي عند -1.5%، تبريد صفقتين بعد خسارة مغلقة،
+   تخطي إذا السبريد > 15% من ATR، جلسة 07–21 UTC (BTC على مدار الساعة).
+7. **الحفظ** بعد كل دورة: `state.json` (المواضع، اليوم، عدد الدورات) +
+   `journal/YYYY-MM-DD.jsonl` (سطر لكل قرار) + `engine_status.json`،
+   والثلاثة تُدفَع للمستودع حتى لو انقطع التشغيل فيُستأنَف من نقطة حفظ.
+8. **السلسلة الذاتية**: كل تشغيل يُسلّح تشغيل التالي (بعد 8 دقائق) عبر
+   workflow_dispatch — لا اعتماد على cron (مكسور في GitHub)، مع إزالة
+   التازمن: لا تُنشأ سلسلتان أبداً.
+9. **الصمت إلا عند الحاجة**: بريد عند تنفيذ أمر، ملخص يومي 21:00 UTC،
+   وخطأ حرج فوري فقط.
+
+## بدء / إيقاف
+
+- تشغيل: عدّل `halt: false` في `config.yml` ثم Commit ثم مشغّل workflow يدوياً
+  مرة واحدة — السلسلة الذاتية تكمل الباقي.
+- إيقاف فوري: `halt: true` في `config.yml` (تنتهي كل شيء خلال دورة واحدة).
+- الأوضاع: `paper` (حساب إشارات بلا أوامر) / `demo` (حساب التريال الحالي) /
+  `live` (حساب حقيقي) — كلها من `config.yml`.
+
+## الحقيقة الصريحة: نظام ويندوز دائم
+
+أجهزة GitHub Actions مؤقتة؛ كل تشغيل يثبّت MT5 على ويندوز نظيف من الصفر.
+**الحفظ الحقيقي هنا هو المستودع**: الحالة والسجلات موجودة بعد كل دورة،
+فإذا انكسر التشغيل أو اختفت الآلة، الدورة التالية تستأنف الحساب من نقطة
+الحفظ. أما جهاز ويندوز حقيقي يعمل 24/7 فهو حلاً خارجَ GitHub:
+- VPS صغير ويندوز (~5$/شهر ويعمل Sentinel نفسه مباشرة)، أو
+- جهازك الشخصي يعمل `sentinel.py` بأوامر جدولة ويندوز مجاناً.
+
+## ملفات المشروع
+
+| الملف | الوظيفة |
 |---|---|
-| `GEMINI_API_KEY_1..5` | The Gemini 5-key rotation matrix |
-| `RESEND_API_KEY` | Notification email API |
-| `RECEIVER_EMAIL` | Where alerts are sent |
-| `EXNESS_LOGIN` / `EXNESS_PASSWORD` / `EXNESS_SERVER` | MT5 demo account credentials |
-| `DEPLOY_PAT` | PAT used to commit `state.json` (keeps the repo "active" so GitHub never auto-disables the schedule) |
+| `config.yml` | لوحة التحكم: halt / mode / pairs / الاستراتيجية / الخطر / الحدود / التنبيهات |
+| `sentinel.py` | محرك التداول: اتصال، إدارة مواضع، إدخالات، مخاطر، تنفيذ، تنبيهات |
+| `strategy.py` | النواة الحتمية (EMA/ATR/Donchian) — قابلة للاختبار على أي آلة |
+| `backtest.py` | اختبار خلفي walk-forward على تاريخ الوسيط المفتوحة |
+| `test_strategy.py` | اختبارات النواة (7 اختبارات) |
+| `state.json` | حالة المحرك الحية (تُدفع بعد كل دورة) |
+| `journal/` | سجل القرارات اليومي (jsonl) |
+| `engine_status.json` | مرآة الحالة + بوابة إيقاف السلسلة |
+| `mt5_ipc_patch.py` | تقنية IPC IAT patch المثبتة (ورثت من v1) |
 
-## Manual test
+## الاختبار الخلفي
 
-Run the workflow *Trading Bot — EURUSD M15* from the **Actions** tab with **notify_boot** checked.
-On full success you get the "verified & running" email; on any failure you get an error alert.
+يدوياً من تبويب Actions: `Sentinel v2 — Backtest` → Run workflow → عدد الأيام.
+النتيجة تُدفَع للمستودع في `backtest_report.md` + `backtest_report.json`
+ويُرسل ملخص بالبريد.
 
-> ⚠️ Disclaimer: This bot executes LLM-generated signals on a **demo/trial** account.
-> LLM output is not reliable financial advice — do not attach a live account without extensive forward-testing.
+محلياً (لأي Python):
+```bash
+python test_strategy.py        # نواة
+python backtest.py 120         # يحتاج جهازاً عليه MT5 مسجّل دخول
+```
+
+## الأسرار المطلوبة (Secrets)
+
+| Secret | الغرض |
+|---|---|
+| `EXNESS_LOGIN/PASSWORD/SERVER` | حساب Exness MT5 (غيّره من Secrets إذا غيّرت الحساب) |
+| `RESEND_API_KEY` | إرسال التنبيهات البريدية |
+| `RECEIVER_EMAIL` | بريد استقبال التنبيهات |
+
+نفّض بتدوير المفاتيح إذا تشكّك في تسرب أي منها.

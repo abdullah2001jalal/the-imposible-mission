@@ -1,0 +1,135 @@
+name: Sentinel v2 — Backtest
+
+# Manual, on-demand proof-of-concept run: replays the deterministic v2 core
+# over real broker M15 history, commits backtest_report.md/.json and emails
+# the summary. Never scheduled, never self-perpetuating.
+
+on:
+  workflow_dispatch:
+    inputs:
+      days_back:
+        description: "Days of M15 history to backtest"
+        required: false
+        default: "120"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sentinel-v2-backtest
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install MetaTrader 5 terminal (silent)
+        shell: pwsh
+        run: |
+          function Find-Terminal {
+            Get-ChildItem 'C:\Program Files', 'C:\Program Files (x86)' -Directory -ErrorAction SilentlyContinue |
+              ForEach-Object { Join-Path $_.FullName 'terminal64.exe' } |
+              Where-Object { Test-Path $_ } |
+              Select-Object -First 1
+          }
+          $installer = Join-Path $env:RUNNER_TEMP 'mt5setup.exe'
+          $urls = @(
+            'https://download.terminal.free/cdn/web/exness.technologies.ltd/mt5/exness5setup.exe',
+            'https://download.terminal.free/cdn/web/metaquotes.ltd/mt5/mt5setup.exe'
+          )
+          $installed = $null
+          foreach ($u in $urls) {
+            try {
+              Invoke-WebRequest $u -OutFile $installer -UseBasicParsing -TimeoutSec 180
+              if ((Get-Item $installer).Length -lt 3MB) { Write-Host "too small from $u, trying next"; continue }
+              Write-Host "downloaded from $u"
+            } catch { Write-Host "failed from ${u}: $_"; continue }
+            $proc = Start-Process -FilePath $installer -ArgumentList '/auto' -Wait -PassThru
+            Write-Host "installer exit code: $($proc.ExitCode)"
+            Start-Sleep -Seconds 5
+            $installed = Find-Terminal
+            if ($installed) { break }
+            Write-Host "no terminal64.exe after this installer, trying next"
+          }
+          if (-not $installed) { Write-Host '::error::terminal64.exe NOT found after all installers'; exit 1 }
+          Write-Host "terminal64.exe installed at: $installed"
+          "MT5_PATH=$installed" | Add-Content -Path $env:GITHUB_ENV
+
+      - name: Install Python dependencies
+        shell: pwsh
+        run: pip install --quiet -r requirements.txt
+
+      - name: Run backtest on real broker history
+        shell: pwsh
+        env:
+          EXNESS_LOGIN: ${{ secrets.EXNESS_LOGIN }}
+          EXNESS_PASSWORD: ${{ secrets.EXNESS_PASSWORD }}
+          EXNESS_SERVER: ${{ secrets.EXNESS_SERVER }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+          MT5_PATH: ${{ env.MT5_PATH }}
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: utf-8
+          PYTHONFAULTHANDLER: '1'
+        run: python -u backtest.py ${{ inputs.days_back || '120' }}
+
+      - name: Commit backtest report (persistence)
+        if: always()
+        shell: pwsh
+        env:
+          DEPLOY_PAT: ${{ secrets.DEPLOY_PAT }}
+        run: |
+          $ErrorActionPreference = 'Continue'
+          git config user.name "gemini-trading-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add backtest_report.md backtest_report.json 2>$null | Out-Null
+          $changed = git diff --cached --name-only 2>$null
+          if ("$changed" -ne '') {
+            git commit -m ("backtest: report " + (Get-Date -AsUTC -Format 'yyyy-MM-ddTHH:mmZ')) | Out-Null
+          }
+          $pushed = $false
+          for ($i = 1; $i -le 5; $i++) {
+            git fetch origin master 2>$null | Out-Null
+            $behind = git rev-list --count HEAD..origin/master 2>$null
+            if ("$behind" -ne '' -and [int]$behind -gt 0) {
+              git rebase origin/master 2>$null | Out-Null
+              if ($LASTEXITCODE -ne 0) {
+                git rebase --abort 2>$null | Out-Null
+                git pull --rebase origin master 2>$null | Out-Null
+              }
+            }
+            git push "https://x-access-token:$env:DEPLOY_PAT@github.com/$env:GITHUB_REPOSITORY.git" master 2>&1 | ForEach-Object { "$_" }
+            if ($LASTEXITCODE -eq 0) { Write-Host "backtest report pushed (attempt $i)"; $pushed = $true; break }
+            Start-Sleep -Seconds 10
+          }
+          if (-not $pushed) { Write-Host '::error::failed to persist backtest report after 5 attempts'; exit 1 }
+
+      - name: Email operator on failure
+        if: always() && !success()
+        shell: pwsh
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+        run: |
+          $runUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+          $body = @{
+            from = 'onboarding@resend.dev'
+            to = @($env:RECEIVER_EMAIL)
+            subject = "🔬 Sentinel v2 BACKTEST run failed"
+            html = "<p>The backtest workflow failed (MT5 install, connection or simulation).</p><p>Check: <a href='$runUrl'>$runUrl</a></p>"
+          } | ConvertTo-Json
+          try {
+            Invoke-RestMethod 'https://api.resend.com/emails' -Method Post -Body $body -ContentType 'application/json' -Headers @{ Authorization = "Bearer $env:RESEND_API_KEY" } | Out-Null
+            Write-Host 'backtest failure alert emailed'
+          } catch {
+            Write-Host "backtest failure email failed: $_"
+          }

@@ -1,50 +1,45 @@
-name: Trading Bot — EURUSD M15 (Exness MT5 + Gemini 3.8 Flash)
+name: Sentinel v2 — 24/7 Multi-Pair Engine
 
 on:
   schedule:
-    # Off-peak minutes (avoid :00/:15/:30/:45 congestion where GitHub is known
-    # to delay/drop scheduled runs; docs recommend avoiding round times).
-    # NOTE: this cron has never fired for this repo (GitHub scheduler bug
-    # actions/runner#4210). It is kept as a chain-restarter/watchdog: the real
-    # 24/7 engine is the "Re-arm next run" step (self-perpetuating dispatch).
+    # Watchdog/chain-restarter ONLY (GitHub's cron is unreliable:
+    # actions/runner#4210). The real scheduler is the self-perpetuating
+    # "Re-arm next run" step; the dedupe check prevents double chains.
     - cron: '8,23,38,53 * * * *'
   workflow_dispatch:
-    inputs:
-      notify_boot:
-        description: "Send the success/verification email if this run fully succeeds"
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: write
 
 concurrency:
-  group: exness-gemini-trading-bot
+  group: sentinel-v2
   cancel-in-progress: false
 
 jobs:
-  trade:
+  sentinel:
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # The alert flag is scratch state for THIS run only: a stale one left in
+      # the repo would wrongly suppress the email step below if this run fails
+      # in an infra stage before the sentinel ever runs.
+      - name: Clear stale per-run scratch
+        shell: pwsh
+        run: |
+          if (Test-Path ALERT_SENT.flag) { Remove-Item ALERT_SENT.flag -Force; Write-Host "stale ALERT_SENT.flag removed" }
+
       # -----------------------------------------------------------------
-      # SELF-PERPETUATING SCHEDULER — bypasses GitHub's broken cron
-      # (actions/runner#4210: scheduled runs silently never fire).
-      # Each run re-arms the NEXT run via the workflow_dispatch API, so the
-      # chain continues 24/7 independently of GitHub's scheduler. Placed
-      # EARLY (right after checkout, before the fragile MT5 install) so the
-      # chain survives install/bot crashes and runner hangs: a hung job is
-      # killed by timeout-minutes and its already-queued successor proceeds.
-      # Chain dedupe: if another run is already queued/in progress (cron
-      # recovered, external scheduler ping, manual test), it becomes the
-      # next link and we skip re-arming -> exactly one chain, never doubled.
-      # Free minutes: this repo is PUBLIC, so runner minutes are unlimited.
+      # SELF-PERPETUATING CHAIN — bypasses GitHub's broken cron scheduler.
+      # Placed BEFORE the fragile MT5 install so the chain survives crashes.
+      # Kill switches (checked in order):
+      #   1. config.yml  halt: true        (master switch, edit + commit)
+      #   2. engine_status.json halt bit  (previous run's engine verdict)
+      # plus chain dedupe: exactly one chain, never doubled.
       # -----------------------------------------------------------------
-      - name: Re-arm next run (self-perpetuation; cron bug 4210 workaround)
+      - name: Re-arm next run (self-perpetuation; gated by config halt)
         if: always()
         shell: pwsh
         env:
@@ -54,8 +49,27 @@ jobs:
           $headers = @{
             Authorization = "Bearer $env:DEPLOY_PAT"
             Accept        = 'application/vnd.github+json'
-            'User-Agent'  = 'trading-bot-selfarm/1.0'
+            'User-Agent'  = 'sentinel-v2-selfarm/2.0'
           }
+          # --- kill switch 1: config.yml master switch ---
+          $halt = $false
+          if (Test-Path config.yml) {
+            $m = Select-String -Path config.yml -Pattern '^\s*halt\s*:\s*(true|false)' | Select-Object -First 1
+            if ($m) { $halt = ($m.Matches[0].Groups[1].Value -eq 'true') }
+          }
+          Write-Host "config.yml -> halt = $halt"
+          # --- kill switch 2: previous run's engine status ---
+          if (-not $halt -and (Test-Path engine_status.json)) {
+            try {
+              $st = Get-Content engine_status.json -Raw | ConvertFrom-Json
+              if ($st.halt -eq $true) { $halt = $true; Write-Host "engine_status.json -> halt=$($st.halt)" }
+            } catch { Write-Host "engine_status.json unreadable (ignored)" }
+          }
+          if ($halt) {
+            Write-Host '::warning::HALT active -> chain stops here. To restart: set halt:false in config.yml, commit, then run this workflow manually.'
+            exit 0
+          }
+          # --- chain dedupe ---
           $pending = 0
           try {
             $runs = Invoke-RestMethod "https://api.github.com/repos/$env:GITHUB_REPOSITORY/actions/runs?per_page=20" -Headers $headers
@@ -73,7 +87,7 @@ jobs:
           # sleep ~8 min here, then dispatch the next run.
           Start-Sleep -Seconds 480
           $url = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/actions/workflows/trading.yml/dispatches"
-          $body = '{"ref":"' + $env:GITHUB_REF_NAME + '","inputs":{"notify_boot":false}}'
+          $body = '{"ref":"' + $env:GITHUB_REF_NAME + '"}'
           $ok = $false
           for ($i = 1; $i -le 3; $i++) {
             try {
@@ -106,8 +120,6 @@ jobs:
               Select-Object -First 1
           }
           $installer = Join-Path $env:RUNNER_TEMP 'mt5setup.exe'
-          # Exness-branded terminal first (local Exness server list -> direct
-          # auto-login); proven MetaQuotes web installer as fallback.
           $urls = @(
             'https://download.terminal.free/cdn/web/exness.technologies.ltd/mt5/exness5setup.exe',
             'https://download.terminal.free/cdn/web/metaquotes.ltd/mt5/mt5setup.exe'
@@ -132,45 +144,25 @@ jobs:
           Write-Host "installed terminal build: $ver"
           "MT5_PATH=$installed" | Add-Content -Path $env:GITHUB_ENV
 
-          # NOTE: no CDN blocking / build pinning. The Python-side IAT patch
-          # (mt5_ipc_patch.py) resolves the IPC handshake for any terminal
-          # build, and server-name resolution needs MetaQuotes' index.
-          Get-ChildItem "$env:APPDATA\MetaQuotes\Terminal" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-            $logdir = Join-Path $_.FullName 'logs'
-            if (Test-Path $logdir) {
-              Get-ChildItem $logdir -Filter *.log -ErrorAction SilentlyContinue |
-                Sort-Object LastWriteTime -Descending | Select-Object -First 2 | ForEach-Object {
-                  Write-Host "--- $($_.Name) ---"
-                  Get-Content $_.FullName -Tail 20 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_ }
-                }
-            }
-          }
-
       - name: Install Python dependencies
         shell: pwsh
         run: pip install --quiet -r requirements.txt
 
-      - name: Run trading bot
+      - name: Run Sentinel v2 engine
         shell: pwsh
         env:
-          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
-          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
-          GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
-          GEMINI_API_KEY_4: ${{ secrets.GEMINI_API_KEY_4 }}
-          GEMINI_API_KEY_5: ${{ secrets.GEMINI_API_KEY_5 }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
           EXNESS_LOGIN: ${{ secrets.EXNESS_LOGIN }}
           EXNESS_PASSWORD: ${{ secrets.EXNESS_PASSWORD }}
           EXNESS_SERVER: ${{ secrets.EXNESS_SERVER }}
-          GEMINI_MODEL: gemini-3.8-flash
-          NOTIFY_BOOT: ${{ inputs.notify_boot == true }}
+          MT5_PATH: ${{ env.MT5_PATH }}
           PYTHONUTF8: '1'
           PYTHONIOENCODING: utf-8
           PYTHONFAULTHANDLER: '1'
-        run: python -u bot.py
+        run: python -u sentinel.py
 
-      - name: Commit state.json (key rotation persistence)
+      - name: Commit persistence (state + journal + engine status)
         if: always()
         shell: pwsh
         env:
@@ -179,25 +171,30 @@ jobs:
           $ErrorActionPreference = 'Continue'
           git config user.name "gemini-trading-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add state.json
-          $changed = git diff --cached --name-only
-          if ($changed -like '*state.json*') {
-            git commit -m ("state: rotation update " + (Get-Date -AsUTC -Format 'yyyy-MM-ddTHH:mmZ')) | Out-Null
+          git add state.json engine_status.json journal backtest_report.md backtest_report.json 2>$null | Out-Null
+          $changed = git diff --cached --name-only 2>$null
+          if ("$changed" -ne '') {
+            git commit -m ("sentinel-v2: state+journal " + (Get-Date -AsUTC -Format 'yyyy-MM-ddTHH:mmZ')) | Out-Null
           }
           $pushed = $false
           for ($i = 1; $i -le 5; $i++) {
-            # Rebase onto latest master. Two runs racing on state.json (external
-            # ping + chain) can conflict -> EXPECTED: resolve in favor of OURS
-            # (this run rotated state last), handle the empty-commit case, push.
             git fetch origin master 2>$null | Out-Null
             $behind = git rev-list --count HEAD..origin/master 2>$null
             if ("$behind" -ne '' -and [int]$behind -gt 0) {
               git rebase origin/master 2>$null | Out-Null
               if ($LASTEXITCODE -ne 0) {
-                $conflicts = (git diff --name-only --diff-filter=U 2>$null) -join ' '
-                if ("$conflicts" -like '*state.json*') {
-                  git checkout --theirs -- state.json 2>$null | Out-Null
-                  git add state.json
+                # Two runs raced on persistence files -> EXPECTED. state.json
+                # / journal / engine_status.json: take the fresher (remote)
+                # version; anything else: abort loudly.
+                $conflicts = (git diff --name-only --diff-filter=U 2>$null) | Where-Object { $_ -ne '' }
+                $resolved = $true
+                foreach ($f in $conflicts) {
+                  if ($f -eq 'state.json' -or $f -like 'journal/*' -or $f -eq 'engine_status.json') {
+                    git checkout --theirs -- $f 2>$null | Out-Null
+                    git add -- $f
+                  } else { $resolved = $false }
+                }
+                if ($resolved) {
                   git -c core.editor=true rebase --continue 2>$null | Out-Null
                   if ($LASTEXITCODE -ne 0) { git rebase --skip 2>$null | Out-Null }
                 } else {
@@ -206,28 +203,31 @@ jobs:
               }
             }
             git push "https://x-access-token:$env:DEPLOY_PAT@github.com/$env:GITHUB_REPOSITORY.git" master 2>&1 | ForEach-Object { "$_" }
-            if ($LASTEXITCODE -eq 0) { Write-Host "state.json pushed (attempt $i)"; $pushed = $true; break }
+            if ($LASTEXITCODE -eq 0) { Write-Host "persistence pushed (attempt $i)"; $pushed = $true; break }
             Start-Sleep -Seconds 10
           }
-          if (-not $pushed) { Write-Host '::error::failed to persist state.json after 5 attempts'; exit 1 }
+          if (-not $pushed) { Write-Host '::error::failed to persist state after 5 attempts'; exit 1 }
 
-      - name: Email operator on any pipeline failure
-        # always() lets this step run even when the job was cancelled by the
-        # 30-minute timeout (conclusion=cancelled, failure() alone is false
-        # there -> a killed run would otherwise die silently); !success()
-        # restricts it to genuine failure/cancellation.
+      - name: Email operator on failure (unless the sentinel already alerted)
+        # always() covers timeout-cancelled runs; !success() narrows to real
+        # failure/cancellation. If the sentinel emailed a CRITICAL alert itself
+        # it stamps ALERT_SENT.flag -> this step skips to avoid double email.
         if: always() && !success()
         shell: pwsh
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
         run: |
+          if (Test-Path ALERT_SENT.flag) {
+            Write-Host 'ALERT_SENT.flag present -> sentinel already emailed a CRITICAL alert; skipping duplicate.'
+            exit 0
+          }
           $runUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
           $body = @{
             from = 'onboarding@resend.dev'
             to = @($env:RECEIVER_EMAIL)
-            subject = "🚨 Trading bot FAILED during pipeline stage"
-            html = "<p>The trading bot workflow failed before/during infrastructure stages (MT5 install, Python setup or state persistence).</p><p>Check: <a href='$runUrl'>$runUrl</a></p>"
+            subject = "🚨 Sentinel v2 FAILED during pipeline stage"
+            html = "<p>The Sentinel v2 workflow failed before/during infrastructure stages (MT5 install, Python setup or persistence).</p><p>Check: <a href='$runUrl'>$runUrl</a></p>"
           } | ConvertTo-Json
           try {
             Invoke-RestMethod 'https://api.resend.com/emails' -Method Post -Body $body -ContentType 'application/json' -Headers @{ Authorization = "Bearer $env:RESEND_API_KEY" } | Out-Null
