@@ -1,13 +1,13 @@
 {
   "key_index": 3,
-  "run_position": 3,
-  "total_runs": 27,
-  "last_run_utc": "2026-10-29 02:11:22",
+  "run_position": 4,
+  "total_runs": 28,
+  "last_run_utc": "2026-10-29 02:24:48",
   "last_run_result": {
     "account": "{'login': 474804202, 'server': 'Exness-MT5Trial15', 'balance': 9996.96}",
-    "gemini": "{'signal': {'action': 'BUY', 'sl_points': 140, 'tp_points': 280}, 'model': 'gemini-3.8-flash', 'key_slot': 5}",
+    "gemini": "{'signal': {'action': 'BUY', 'sl_points': 140, 'tp_points': 280}, 'model': 'gemini-3.6-flash', 'key_slot': 4}",
     "signal": "{'action': 'BUY', 'sl_points': 140, 'tp_points': 280}",
-    "trade": "{'ticket': 2656000401, 'symbol': 'EURUSDm', 'action': 'BUY', 'volume': 0.01, 'price': 1.1154000000000002, 'sl': 1.114, 'tp': 1.1182, 'retcode': 10009, 'comment': 'ok'}",
-    "utc": "2026-10-29 02:11:22"
+    "trade": "{'skipped': 'open position limit', 'open_positions': 1}",
+    "utc": "2026-10-29 02:24:48"
   }
 }
