@@ -1,0 +1,63 @@
+name: Broker symbol probe (diagnostics)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install MetaTrader 5 terminal (silent)
+        shell: pwsh
+        run: |
+          function Find-Terminal {
+            Get-ChildItem 'C:\Program Files', 'C:\Program Files (x86)' -Directory -ErrorAction SilentlyContinue |
+              ForEach-Object { Join-Path $_.FullName 'terminal64.exe' } |
+              Where-Object { Test-Path $_ } |
+              Select-Object -First 1
+          }
+          $installer = Join-Path $env:RUNNER_TEMP 'mt5setup.exe'
+          $urls = @(
+            'https://download.terminal.free/cdn/web/exness.technologies.ltd/mt5/exness5setup.exe',
+            'https://download.terminal.free/cdn/web/metaquotes.ltd/mt5/mt5setup.exe'
+          )
+          $installed = $null
+          foreach ($u in $urls) {
+            try {
+              Invoke-WebRequest $u -OutFile $installer -UseBasicParsing -TimeoutSec 180
+              if ((Get-Item $installer).Length -lt 3MB) { continue }
+            } catch { continue }
+            Start-Process -FilePath $installer -ArgumentList '/auto' -Wait -PassThru | Out-Null
+            Start-Sleep -Seconds 5
+            $installed = Find-Terminal
+            if ($installed) { break }
+          }
+          if (-not $installed) { Write-Host '::error::terminal64.exe missing'; exit 1 }
+          "MT5_PATH=$installed" | Add-Content -Path $env:GITHUB_ENV
+
+      - name: Install Python dependencies
+        shell: pwsh
+        run: pip install --quiet -r requirements.txt
+
+      - name: Probe broker specifications
+        shell: pwsh
+        env:
+          EXNESS_LOGIN: ${{ secrets.EXNESS_LOGIN }}
+          EXNESS_PASSWORD: ${{ secrets.EXNESS_PASSWORD }}
+          EXNESS_SERVER: ${{ secrets.EXNESS_SERVER }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+          PYTHONUTF8: '1'
+        run: python -u probe_symbols.py
