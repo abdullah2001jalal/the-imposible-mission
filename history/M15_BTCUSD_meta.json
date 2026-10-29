@@ -1,0 +1,12 @@
+{
+  "point": 0.01,
+  "digits": 2,
+  "trade_tick_size": 0.01,
+  "trade_tick_value": 0.01,
+  "volume_min": 0.01,
+  "volume_max": 200.0,
+  "volume_step": 0.01,
+  "spread": 640.0,
+  "bars": 11520,
+  "dumped": "2026-10-29 12:37"
+}

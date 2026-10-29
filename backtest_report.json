@@ -25,10 +25,10 @@
       "winrate": 0.229,
       "profit_factor": 0.81,
       "avg_r": -0.108,
-      "net": -544.96,
-      "net_pct": -0.0545,
-      "max_dd_pct": 0.0696,
-      "final_equity": 9450.6
+      "net": -547.67,
+      "net_pct": -0.0548,
+      "max_dd_pct": 0.0697,
+      "final_equity": 9447.89
     },
     "XAUUSD": {
       "trades": 178,
@@ -54,13 +54,13 @@
   "combined": {
     "pairs": 5,
     "trades": 693,
-    "net": -2394.18,
-    "net_pct": -0.2395,
+    "net": -2396.89,
+    "net_pct": -0.2398,
     "winrate": 0.242,
     "avg_profit_factor": 0.89,
     "max_dd_pct": 0.1396
   },
   "days": 120,
   "start_equity": 9995.56,
-  "generated": "2026-10-29 12:35:10"
+  "generated": "2026-10-29 12:37:20"
 }
