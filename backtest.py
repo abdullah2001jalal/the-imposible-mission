@@ -254,7 +254,7 @@ def main() -> int:
         if rates is None:
             results[p] = {"error": "no history returned"}
             continue
-        bars = [dict(r) for r in rates]
+        bars = S.rows_to_dicts(rates)
         log(f"{p}: {len(bars)} bars ({len(bars) / 96:.0f} days) point-value/lot={mpp:.4f}")
 
         sim = Sim(bars, cfg["strategy"], cfg["risk"], cfg["limits"], spread_price,

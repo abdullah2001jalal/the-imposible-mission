@@ -345,11 +345,24 @@ def resolve_for_pair(mt5_module, pair: str) -> str | None:
     return None
 
 
+def rows_to_dicts(rates) -> list[dict]:
+    """Convert MetaTrader5's numpy structured records to plain dicts (native types)."""
+    names = rates.dtype.names
+    out = []
+    for rec in rates:
+        d = {}
+        for n in names:
+            v = rec[n]
+            d[n] = v.item() if hasattr(v, "item") else v
+        out.append(d)
+    return out
+
+
 def fetch_bars(mt5_module, timeframe, symbol: str) -> list[dict] | None:
     for attempt in range(1, 4):
         rates = mt5_module.copy_rates_from_pos(symbol, timeframe, 0, BAR_COUNT)
         if rates is not None and len(rates) >= 230:
-            return [dict(r) for r in rates]
+            return rows_to_dicts(rates)
         log(f"rates for {symbol} attempt {attempt}/3 short ({mt5_module.last_error()})")
         time.sleep(8)
     return None
