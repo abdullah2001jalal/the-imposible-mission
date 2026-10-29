@@ -91,7 +91,7 @@ jobs:
           $ErrorActionPreference = 'Continue'
           git config user.name "gemini-trading-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add backtest_report.md backtest_report.json 2>$null | Out-Null
+          git add backtest_report.md backtest_report.json history 2>$null | Out-Null
           $changed = git diff --cached --name-only 2>$null
           if ("$changed" -ne '') {
             git commit -m ("backtest: report " + (Get-Date -AsUTC -Format 'yyyy-MM-ddTHH:mmZ')) | Out-Null
