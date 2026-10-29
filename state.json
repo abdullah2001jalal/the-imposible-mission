@@ -1,16 +1,16 @@
 {
   "schema": "sentinel-v2",
-  "updated": "2026-10-29 14:21:26",
+  "updated": "2026-10-29 14:31:29",
   "day": {
     "date": "2026-10-29",
-    "start_equity": 9996.91
+    "start_equity": 9995.94
   },
   "summary_sent_day": "",
   "last_bar": {
-    "GBPUSD": 1793283300,
-    "XAUUSD": 1793283300,
-    "BTCUSD": 1793283300,
-    "EURUSD": 1793283300
+    "GBPUSD": 1793284200,
+    "XAUUSD": 1793284200,
+    "BTCUSD": 1793284200,
+    "EURUSD": 1793284200
   },
   "positions": {},
   "closed_log": [
@@ -19,15 +19,15 @@
       "pair": "EURUSD",
       "entry": 1.1140800000000002,
       "opened": "2026-10-29 05:27:04",
-      "closed": "2026-10-29 13:23:44"
+      "closed": "2026-10-29 13:33:12"
     },
     {
       "ticket": "2659996135",
       "pair": "EURUSD",
       "entry": 1.1119800000000002,
-      "opened": "2026-10-29 13:23:44",
-      "closed": "2026-10-29 13:43:03"
+      "opened": "2026-10-29 13:24:05",
+      "closed": "2026-10-29 13:52:44"
     }
   ],
-  "total_cycles": 5
+  "total_cycles": 6
 }
