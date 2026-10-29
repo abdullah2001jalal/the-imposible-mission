@@ -30,6 +30,11 @@ def log(*a):
     print(f"[{time.strftime('%H:%M:%S')}] " + " ".join(str(x) for x in a), flush=True)
 
 
+def load_cfg():
+    with open("config.yml", "r", encoding="utf-8") as fh:
+        return yaml.safe_load(fh)
+
+
 def money_per_point(info) -> float:
     """Contract value of a 1.0 price-point move for 1.0 lot."""
     point = float(info.point)
