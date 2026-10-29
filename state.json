@@ -2,12 +2,12 @@
   "key_index": 4,
   "run_position": 6,
   "total_runs": 38,
-  "last_run_utc": "2026-10-29 06:23:43",
+  "last_run_utc": "2026-10-29 06:37:06",
   "last_run_result": {
     "account": "{'login': 474804202, 'server': 'Exness-MT5Trial15', 'balance': 9995.56}",
-    "gemini": "{'signal': {'action': 'HOLD', 'sl_points': 150, 'tp_points': 300}, 'model': 'gemini-3.8-flash', 'key_slot': 5}",
-    "signal": "{'action': 'HOLD', 'sl_points': 150, 'tp_points': 300}",
-    "trade": null,
-    "utc": "2026-10-29 06:23:43"
+    "gemini": "{'signal': {'action': 'SELL', 'sl_points': 150, 'tp_points': 300}, 'model': 'gemini-3.6-flash', 'key_slot': 1}",
+    "signal": "{'action': 'SELL', 'sl_points': 150, 'tp_points': 300}",
+    "trade": "{'skipped': 'open position limit', 'open_positions': 1}",
+    "utc": "2026-10-29 06:37:06"
   }
 }
