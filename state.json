@@ -2,9 +2,12 @@
   "key_index": 3,
   "run_position": 2,
   "total_runs": 26,
-  "last_run_utc": "2026-10-29 01:33:27",
+  "last_run_utc": "2026-10-29 01:46:55",
   "last_run_result": {
-    "status": "error",
-    "utc": "2026-10-29 01:33:27"
+    "account": "{'login': 474804202, 'server': 'Exness-MT5Trial15', 'balance': 9998.46}",
+    "gemini": "{'signal': {'action': 'SELL', 'sl_points': 150, 'tp_points': 260}, 'model': 'gemini-3.8-flash', 'key_slot': 1}",
+    "signal": "{'action': 'SELL', 'sl_points': 150, 'tp_points': 260}",
+    "trade": "{'ticket': 2655863333, 'symbol': 'EURUSDm', 'action': 'SELL', 'volume': 0.01, 'price': 1.11433, 'sl': 1.11583, 'tp': 1.11173, 'retcode': 10009, 'comment': 'ok'}",
+    "utc": "2026-10-29 01:46:55"
   }
 }
