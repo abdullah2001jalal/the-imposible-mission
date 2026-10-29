@@ -1,66 +1,56 @@
 {
   "per_pair": {
     "EURUSD": {
-      "trades": 61,
-      "winrate": 0.279,
-      "profit_factor": 1.03,
-      "avg_r": 0.016,
-      "net": 46.24,
-      "net_pct": 0.0046,
-      "max_dd_pct": 0.0471,
-      "final_equity": 10041.8
+      "trades": 62,
+      "winrate": 0.21,
+      "profit_factor": 1.18,
+      "avg_r": 0.097,
+      "net": 341.81,
+      "net_pct": 0.0342,
+      "max_dd_pct": 0.064,
+      "final_equity": 10341.81
     },
     "GBPUSD": {
-      "trades": 84,
-      "winrate": 0.214,
-      "profit_factor": 0.69,
-      "avg_r": -0.191,
-      "net": -933.93,
-      "net_pct": -0.0934,
-      "max_dd_pct": 0.0935,
-      "final_equity": 9061.63
-    },
-    "USDJPY": {
-      "trades": 83,
-      "winrate": 0.229,
-      "profit_factor": 0.81,
-      "avg_r": -0.108,
-      "net": -547.67,
-      "net_pct": -0.0548,
-      "max_dd_pct": 0.0697,
-      "final_equity": 9447.89
+      "trades": 38,
+      "winrate": 0.289,
+      "profit_factor": 1.22,
+      "avg_r": 0.158,
+      "net": 336.76,
+      "net_pct": 0.0337,
+      "max_dd_pct": 0.0414,
+      "final_equity": 10336.76
     },
     "XAUUSD": {
-      "trades": 178,
-      "winrate": 0.258,
-      "profit_factor": 1.02,
-      "avg_r": 0.011,
-      "net": 153.42,
-      "net_pct": 0.0153,
-      "max_dd_pct": 0.0683,
-      "final_equity": 10148.98
+      "trades": 128,
+      "winrate": 0.438,
+      "profit_factor": 1.17,
+      "avg_r": 0.094,
+      "net": 665.34,
+      "net_pct": 0.0665,
+      "max_dd_pct": 0.0542,
+      "final_equity": 10665.34
     },
     "BTCUSD": {
-      "trades": 287,
-      "winrate": 0.23,
-      "profit_factor": 0.88,
-      "avg_r": -0.065,
-      "net": -1114.95,
-      "net_pct": -0.1115,
-      "max_dd_pct": 0.1396,
-      "final_equity": 8880.61
+      "trades": 145,
+      "winrate": 0.207,
+      "profit_factor": 1.16,
+      "avg_r": 0.078,
+      "net": 609.48,
+      "net_pct": 0.0609,
+      "max_dd_pct": 0.0932,
+      "final_equity": 10609.48
     }
   },
   "combined": {
-    "pairs": 5,
-    "trades": 693,
-    "net": -2396.89,
-    "net_pct": -0.2398,
-    "winrate": 0.242,
-    "avg_profit_factor": 0.89,
-    "max_dd_pct": 0.1396
+    "pairs": 4,
+    "trades": 373,
+    "net": 1953.39,
+    "net_pct": 0.1953,
+    "winrate": 0.286,
+    "avg_profit_factor": 1.18,
+    "max_dd_pct": 0.0932
   },
   "days": 120,
-  "start_equity": 9995.56,
-  "generated": "2026-10-29 12:37:20"
+  "start_equity": 10000.0,
+  "generated": "2026-10-29 12:42:56"
 }
