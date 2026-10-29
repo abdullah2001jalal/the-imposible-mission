@@ -369,17 +369,22 @@ def fetch_bars(mt5_module, timeframe, symbol: str) -> list[dict] | None:
 
 
 def risk_volume(symbol_info, equity: float, stop_dist: float, risk_pct: float) -> float:
-    """Volume so a full stop-out loses ~risk_pct of equity."""
+    """Volume so a full stop-out loses ~risk_pct of equity.
+
+    Contract math: money per point per lot = tick_value * point / tick_size;
+    the stop distance is a PRICE distance -> convert to points first.
+    """
     if stop_dist <= 0 or equity <= 0:
         return 0.0
     try:
         point = float(symbol_info.point)
         tick_size = float(getattr(symbol_info, "trade_tick_size", 0) or point) or point
         tick_value = float(getattr(symbol_info, "trade_tick_value", 0) or 0)
-        if tick_value <= 0 or point <= 0:
+        if tick_value <= 0 or point <= 0 or tick_size <= 0:
             return 0.0
         money_per_point_per_lot = tick_value * (point / tick_size)
-        vol = (equity * risk_pct) / (stop_dist * money_per_point_per_lot)
+        stop_points_count = stop_dist / point
+        vol = (equity * risk_pct) / (stop_points_count * money_per_point_per_lot)
     except Exception as exc:
         log(f"risk_volume error {type(exc).__name__}: {exc}")
         return 0.0
@@ -521,11 +526,17 @@ def run_cycles(cfg: dict, mt5_module, state: dict, halt_bit: bool) -> dict:
     executed: list[dict] = []
 
     # ---- manage open book positions ----
+    def s_for(pair_base: str) -> dict:
+        base = {k: v for k, v in strat_cfg.items() if k != "overrides"}
+        base.update((strat_cfg.get("overrides") or {}).get(pair_base) or {})
+        return base
+
     for ticket_s, ctx in list(book.items()):
         pos = live.get(int(ticket_s))
         if pos is None:
             continue
-        pair = symbol_of.get(ctx.get("pair", ""), None)
+        p_base = ctx.get("pair", "")
+        pair = symbol_of.get(p_base, None)
         if pair is None or pos.symbol != pair:
             log(f"skip manage ticket {ticket_s}: symbol mismatch")
             continue
@@ -542,7 +553,8 @@ def run_cycles(cfg: dict, mt5_module, state: dict, halt_bit: bool) -> dict:
         pc = PositionCtx(ticket=int(ticket_s), pair=pair, direction=direction,
                          entry=float(pos.price_open), stop_points=float(ctx.get("stop_points", 0)),
                          volume=float(pos.volume), be_moved=bool(ctx.get("be_moved")))
-        act = manage_position(pc, bs, strat_cfg)
+        pcfg = s_for(p_base)
+        act = manage_position(pc, bs, pcfg)
         journal({"ev": "manage", "ticket": ticket_s, "pair": pair, "plan": act.action,
                  "r": act.extras.get("r_multiple"), "why": act.reason})
         if act.action == "CLOSE":
@@ -625,7 +637,8 @@ def run_cycles(cfg: dict, mt5_module, state: dict, halt_bit: bool) -> dict:
             journal({"ev": "session_skip", "pair": p})
             continue
 
-        action, atr_val = entry_signal(bs, strat_cfg)
+        sc = s_for(p)
+        action, atr_val = entry_signal(bs, sc)
         if action == "NONE":
             journal({"ev": "no_signal", "pair": p})
             continue
@@ -662,9 +675,9 @@ def run_cycles(cfg: dict, mt5_module, state: dict, halt_bit: bool) -> dict:
             continue
         digits = info.digits
         if action == "BUY":
-            price, sl, tp = tick.ask, round(tick.ask - stop_dist, digits), round(tick.ask + float(strat_cfg.get("rr_take", 2.0)) * stop_dist, digits)
+            price, sl, tp = tick.ask, round(tick.ask - stop_dist, digits), round(tick.ask + float(sc.get("rr_take", 2.0)) * stop_dist, digits)
         else:
-            price, sl, tp = tick.bid, round(tick.bid + stop_dist, digits), round(tick.bid - float(strat_cfg.get("rr_take", 2.0)) * stop_dist, digits)
+            price, sl, tp = tick.bid, round(tick.bid + stop_dist, digits), round(tick.bid - float(sc.get("rr_take", 2.0)) * stop_dist, digits)
 
         for fill in (mt5_module.ORDER_FILLING_FOK, mt5_module.ORDER_FILLING_IOC, mt5_module.ORDER_FILLING_RETURN):
             req = {

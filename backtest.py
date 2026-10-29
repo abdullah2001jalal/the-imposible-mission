@@ -68,7 +68,10 @@ class Sim:
         self.rr = float(strat["rr_take"])
         self.be_r = float(strat["be_at_r"])
         self.spread = spread_price
-        self.mpp = mpp
+        # contract value of a 1.0 price-unit move for 1.0 lot (account currency):
+        # EURUSD -> 100000 $/1.0 ; USDJPY -> ~633 ; XAU -> 100 ; BTC -> 1
+        self.ppv = float(getattr(info, "trade_tick_value", 0) or 0) / float(
+            getattr(info, "trade_tick_size", 0) or info.point)
         self.point = float(info.point)
         self.digits = int(info.digits)
         self.step = float(info.volume_step or 0.01)
@@ -78,6 +81,7 @@ class Sim:
         self.max_pos = int(risk.get("max_positions", 4))
         self.cool_bars = int(risk.get("cooldown_bars_after_loss", 2))
         self.spread_cap = float(lim.get("max_spread_atr_frac", 0.15))
+        self.flip_exit = bool(strat.get("exit_flip_trend", True))
         hl = [int(x) for x in lim.get("trading_hours_utc", [7, 21])]
         self.h_lo, self.h_hi = hl[0], min(hl[1], 24)
         self.pos = None
@@ -88,7 +92,7 @@ class Sim:
     def close(self, exit_px, closed_t, i) -> None:
         p = self.pos
         dx = exit_px - p["entry"]
-        pnl = dx * p["ds"] * p["vol"] * self.mpp
+        pnl = dx * p["ds"] * p["vol"] * self.ppv
         self.equity += pnl
         self.trades.append({"dir": p["dir"], "entry": round(p["entry"], self.digits),
                             "exit": round(exit_px, self.digits),
@@ -137,7 +141,7 @@ class Sim:
         entry = float(self.bars[nxt]["open"])
         entry = entry + self.spread if want == "BUY" else entry - self.spread
         stop = a * self.sl_atr
-        vol = (self.equity * self.risk_pct) / (stop * self.mpp)
+        vol = (self.equity * self.risk_pct) / (stop * self.ppv)
         if vol < self.vmin:
             return
         vol = min(round(round(vol / self.step) * self.step, 8), self.vmax)
@@ -174,9 +178,10 @@ class Sim:
         ):
             pos["be"] = True
             pos["sl"] = round(pos["entry"] + (0.1 * self.point) * pos["ds"], self.digits)
-        reg = self.regime(i)
-        if (pos["ds"] > 0 and reg < 0) or (pos["ds"] < 0 and reg > 0):
-            self.close(float(b["close"]), int(b["time"]), i)
+        if self.flip_exit:
+            reg = self.regime(i)
+            if (pos["ds"] > 0 and reg < 0) or (pos["ds"] < 0 and reg > 0):
+                self.close(float(b["close"]), int(b["time"]), i)
 
     # ---------- run + stats ----------
     def run(self) -> None:
@@ -209,56 +214,131 @@ class Sim:
                 "final_equity": round(self.equity, 2)}
 
 
+def merge_overrides(strat: dict, pair: str) -> dict:
+    """Pair-specific strategy params (config: strategy.overrides.<PAIR>)."""
+    base = {k: v for k, v in strat.items() if k != "overrides"}
+    ov = (strat.get("overrides") or {}).get(pair) or {}
+    base.update(ov)
+    return base
+
+
+def pair_history_path(pair: str) -> str:
+    return os.path.join("history", f"M15_{pair}.csv.gz")
+
+
+def pair_meta_path(pair: str) -> str:
+    return os.path.join("history", f"M15_{pair}_meta.json")
+
+
+def save_history(pair: str, bars, info) -> None:
+    import csv
+    import gzip
+    os.makedirs("history", exist_ok=True)
+    with gzip.open(pair_history_path(pair), "wt", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["time", "open", "high", "low", "close"])
+        for b in bars:
+            w.writerow([int(b["time"]), float(b["open"]), float(b["high"]),
+                        float(b["low"]), float(b["close"])])
+    meta = {
+        "point": float(info.point), "digits": int(info.digits),
+        "trade_tick_size": float(getattr(info, "trade_tick_size", 0) or info.point),
+        "trade_tick_value": float(getattr(info, "trade_tick_value", 0) or 0),
+        "volume_min": float(info.volume_min), "volume_max": float(info.volume_max),
+        "volume_step": float(info.volume_step), "spread": float(info.spread),
+        "bars": len(bars),
+        "dumped": time.strftime("%Y-%m-%d %H:%M", time.gmtime()),
+    }
+    with open(pair_meta_path(pair), "w", encoding="utf-8") as fh:
+        json.dump(meta, fh, indent=2)
+
+
+def load_history(pair: str):
+    import csv
+    import gzip
+    from types import SimpleNamespace as NS
+    with gzip.open(pair_history_path(pair), "rt", newline="", encoding="utf-8") as fh:
+        rows = list(csv.reader(fh))[1:]
+    bars = [{"time": int(float(r[0])), "open": float(r[1]), "high": float(r[2]),
+             "low": float(r[3]), "close": float(r[4])} for r in rows if r]
+    meta = json.load(open(pair_meta_path(pair), encoding="utf-8"))
+    info = NS(point=meta["point"], digits=meta["digits"],
+              trade_tick_size=meta["trade_tick_size"], trade_tick_value=meta["trade_tick_value"],
+              volume_min=meta["volume_min"], volume_max=meta["volume_max"],
+              volume_step=meta["volume_step"], spread=meta["spread"])
+    return bars, info
+
+
 def main() -> int:
     cfg = load_cfg()
-    days_back = int(sys.argv[1]) if len(sys.argv) > 1 else 120
+    argv = [a for a in sys.argv[1:]]
+    days_back = int(argv[0]) if argv and argv[0].isdigit() else 120
+    dump = "dump" in argv          # refresh history from the broker even if a dump exists
     total_bars = min(int(days_back * 24 * 60 / 15), 13000)
 
-    try:
-        from mt5_ipc_patch import apply
-        apply()
-    except Exception as exc:
-        log(f"ipc patch skipped: {type(exc).__name__}: {exc}")
+    pairs = [str(x) for x in cfg["pairs"]]
+    need_broker = dump or any(not os.path.isfile(pair_history_path(p)) for p in pairs)
 
-    import MetaTrader5 as mt
-    import sentinel as S
+    mt = None
+    S = None
+    equity0 = DEFAULT_EQUITY
+    if need_broker:
+        try:
+            from mt5_ipc_patch import apply
+            apply()
+        except Exception as exc:
+            log(f"ipc patch skipped: {type(exc).__name__}: {exc}")
+        import MetaTrader5 as mt5_module
+        mt = mt5_module
+        import sentinel as S2
+        S = S2
+        acct = S.connect_mt5(mt)
+        equity0 = float(acct["balance"]) or DEFAULT_EQUITY
+        log(f"backtest on {acct['login']} @ {acct['server']} start equity {equity0}")
+        S.wait_symbol_base(mt)
+    else:
+        log("using committed history dumps (no broker connection required)")
 
-    acct = S.connect_mt5(mt)
-    equity0 = float(acct["balance"]) or DEFAULT_EQUITY
-    log(f"backtest on {acct['login']} @ {acct['server']} start equity {equity0}")
-
-    S.wait_symbol_base(mt)
     results = {}
-    for p in [str(x) for x in cfg["pairs"]]:
-        sym = S.resolve_for_pair(mt, p)
-        if not sym:
-            results[p] = {"error": "symbol unresolved"}
+    for p in pairs:
+        have_dump = os.path.isfile(pair_history_path(p))
+        if have_dump and not dump and mt is None:
+            bars, info = load_history(p)
+        elif mt is not None:
+            sym = S.resolve_for_pair(mt, p)
+            if not sym:
+                results[p] = {"error": "symbol unresolved"}
+                continue
+            info = mt.symbol_info(sym)
+            if info is None or info.point <= 0:
+                results[p] = {"error": "symbol_info unavailable"}
+                continue
+            if float(getattr(info, "trade_tick_value", 0) or 0) <= 0:
+                results[p] = {"error": "trade_tick_value unavailable"}
+                continue
+            rates = None
+            for attempt in range(3):
+                rates = mt.copy_rates_from_pos(sym, mt.TIMEFRAME_M15, 0, total_bars)
+                if rates is not None and len(rates) >= WARMUP + 60:
+                    break
+                log(f"  {p}: history attempt {attempt + 1}/3 short")
+                time.sleep(6)
+            if rates is None:
+                results[p] = {"error": "no history returned"}
+                continue
+            bars = S.rows_to_dicts(rates)
+            if dump or not have_dump:
+                save_history(p, bars, info)
+        else:
+            results[p] = {"error": "history dump missing and broker unavailable"}
             continue
-        info = mt.symbol_info(sym)
-        if info is None or info.point <= 0:
-            results[p] = {"error": "symbol_info unavailable"}
-            continue
-        mpp = money_per_point(info)
-        if mpp <= 0:
-            results[p] = {"error": "trade_tick_value unavailable"}
-            continue
-        spread_price = (info.spread + SLIPPAGE_POINTS) * info.point
+        log(f"{p}: {len(bars)} bars ({len(bars) / 96:.0f} days)")
 
-        rates = None
-        for attempt in range(3):
-            rates = mt.copy_rates_from_pos(sym, mt.TIMEFRAME_M15, 0, total_bars)
-            if rates is not None and len(rates) >= WARMUP + 60:
-                break
-            log(f"  {p}: history attempt {attempt + 1}/3 short")
-            time.sleep(6)
-        if rates is None:
-            results[p] = {"error": "no history returned"}
-            continue
-        bars = S.rows_to_dicts(rates)
-        log(f"{p}: {len(bars)} bars ({len(bars) / 96:.0f} days) point-value/lot={mpp:.4f}")
-
-        sim = Sim(bars, cfg["strategy"], cfg["risk"], cfg["limits"], spread_price,
-                  mpp, info, equity0, is_24h=p.upper().startswith("BTC"))
+        strat_p = merge_overrides(cfg["strategy"], p)
+        spread_price = ((info.spread if hasattr(info, "spread") and info.spread else 12)
+                        * info.point) + SLIPPAGE_POINTS * info.point
+        sim = Sim(bars, strat_p, cfg["risk"], cfg["limits"], spread_price,
+                  None, info, equity0, is_24h=p.upper().startswith("BTC"))
         sim.run()
         results[p] = sim.stats()
         log(f"{p} -> {json.dumps(results[p])[:200]}")
@@ -274,20 +354,20 @@ def main() -> int:
                   fh, indent=2, ensure_ascii=False, default=str)
     log("BACKTEST COMPLETE " + json.dumps(combined))
 
-    try:
-        from sentinel import send_email
-        send_email(
-            f"🔬 Sentinel v2 backtest {days_back}d: PF={combined.get('avg_profit_factor')} "
-            f"WR={round((combined.get('winrate') or 0) * 100)}% net={combined.get('net')}$",
-            "<pre style='white-space:pre-wrap'>" + report[:1800] + "</pre>",
-        )
-    except Exception as exc:
-        log(f"email failed: {type(exc).__name__}: {exc}")
-
-    try:
-        mt.shutdown()
-    except Exception:
-        pass
+    if mt is not None:
+        try:
+            from sentinel import send_email
+            send_email(
+                f"🔬 Sentinel v2 backtest {days_back}d: PF={combined.get('avg_profit_factor')} "
+                f"WR={round((combined.get('winrate') or 0) * 100)}% net={combined.get('net')}$",
+                "<pre style='white-space:pre-wrap'>" + report[:1800] + "</pre>",
+            )
+        except Exception as exc:
+            log(f"email failed: {type(exc).__name__}: {exc}")
+        try:
+            mt.shutdown()
+        except Exception:
+            pass
     return 0
 
 

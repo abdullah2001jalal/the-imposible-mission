@@ -26,6 +26,9 @@ strategy:
   sl_atr: 1.5                # مسافة stopwords = 1.5 x ATR
   rr_take: 2.0               # الهدف = 2R
   be_at_r: 1.0               # رفع الستوب إلى التعادل عند +1R
+  exit_flip_trend: true      # إغلاق فوري عند انقلاب الترند ضد الموضع
+  overrides: {}              # ضبط لكل زوج يسوى فوق الأساس:
+                             # overrides: {BTCUSD: {breakout_lookback: 48}}
 
 risk:
   risk_per_trade: 0.006      # 0.6% من حقوق الملكية لكل ضبوة
