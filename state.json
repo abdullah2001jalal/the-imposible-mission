@@ -1,9 +1,9 @@
 {
   "schema": "sentinel-v2",
-  "updated": "2026-10-29 13:04:01",
+  "updated": "2026-10-29 13:14:21",
   "day": {
     "date": "2026-10-29",
-    "start_equity": 9996.91
+    "start_equity": 9995.94
   },
   "summary_sent_day": "",
   "last_bar": {
@@ -17,11 +17,11 @@
       "symbol": "EURUSDm",
       "entry": 1.1140800000000002,
       "stop_points": 0.0013999999999998458,
-      "be_moved": true,
+      "be_moved": false,
       "opened": "2026-10-29 05:27:04",
       "adopted": true
     }
   },
   "closed_log": [],
-  "total_cycles": 1
+  "total_cycles": 2
 }
