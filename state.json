@@ -1,6 +1,6 @@
 {
   "schema": "sentinel-v2",
-  "updated": "2026-10-30 17:37:41",
+  "updated": "2026-10-30 17:41:45",
   "day": {
     "date": "2026-10-30",
     "start_equity": 9814.88
@@ -8,7 +8,7 @@
   "summary_sent_day": "2026-10-29",
   "last_bar": {
     "GBPUSD": 1793381400,
-    "XAUUSD": 1793381400,
+    "XAUUSD": 1793380500,
     "BTCUSD": 1793319300,
     "EURUSD": 1793381400
   },
@@ -25,9 +25,10 @@
       "pair": "XAUUSD",
       "symbol": "XAUUSDm",
       "entry": 3882.321,
-      "stop_points": 19.756040663779338,
+      "stop_points": 19.756000000000313,
       "be_moved": false,
-      "opened": "2026-10-30 17:37:13"
+      "opened": "2026-10-30 17:37:40",
+      "adopted": true
     }
   },
   "closed_log": [
@@ -85,7 +86,7 @@
       "pair": "XAUUSD",
       "entry": 3929.192,
       "opened": "2026-10-30 13:43:00",
-      "closed": "2026-10-30 15:59:34"
+      "closed": "2026-10-30 16:09:33"
     }
   ],
   "total_cycles": 84
