@@ -1,7 +1,7 @@
 {
   "halt": false,
   "mode": "demo",
-  "total_cycles": 50,
+  "total_cycles": 51,
   "open_positions": 1,
-  "day_pnl_pct": -0.329
+  "day_pnl_pct": -0.278
 }
