@@ -1,0 +1,5 @@
+{"t": "2026-10-30 00:09:40", "ev": "cycle", "mode": "demo", "open": 0, "equity": 9814.88, "day_pnl": 0.0, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-30 00:09:41", "ev": "session_skip", "pair": "EURUSD"}
+{"t": "2026-10-30 00:09:41", "ev": "session_skip", "pair": "GBPUSD"}
+{"t": "2026-10-30 00:09:41", "ev": "session_skip", "pair": "XAUUSD"}
+{"t": "2026-10-30 00:09:42", "ev": "no_signal", "pair": "BTCUSD"}
