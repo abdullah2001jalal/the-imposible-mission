@@ -1,5 +1,6 @@
-{"t": "2026-10-30 00:09:40", "ev": "cycle", "mode": "demo", "open": 0, "equity": 9814.88, "day_pnl": 0.0, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-30 00:09:41", "ev": "session_skip", "pair": "EURUSD"}
-{"t": "2026-10-30 00:09:41", "ev": "session_skip", "pair": "GBPUSD"}
-{"t": "2026-10-30 00:09:41", "ev": "session_skip", "pair": "XAUUSD"}
-{"t": "2026-10-30 00:09:42", "ev": "no_signal", "pair": "BTCUSD"}
+{"t": "2026-10-30 00:19:16", "ev": "cycle", "mode": "demo", "open": 0, "equity": 9814.88, "day_pnl": 0.0, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-30 00:19:17", "ev": "session_skip", "pair": "EURUSD"}
+{"t": "2026-10-30 00:19:18", "ev": "session_skip", "pair": "GBPUSD"}
+{"t": "2026-10-30 00:19:18", "ev": "session_skip", "pair": "XAUUSD"}
+{"t": "2026-10-30 00:19:18", "ev": "signal", "pair": "BTCUSD", "act": "SELL", "stop_dist": 1376.351621, "vol": 0.04, "mode": "demo", "atr": 1376.351621}
+{"t": "2026-10-30 00:19:18", "ev": "executed", "pair": "BTCUSD", "act": "SELL", "retcode": 10009, "ticket": 2663745632}
