@@ -1,107 +1,110 @@
-{"t": "2026-10-31 00:13:02", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9881.82, "day_pnl": 0.0, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 00:13:03", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.17, "why": "R=0.17"}
-{"t": "2026-10-31 00:13:03", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 00:13:04", "ev": "session_skip", "pair": "EURUSD"}
-{"t": "2026-10-31 00:13:04", "ev": "session_skip", "pair": "GBPUSD"}
-{"t": "2026-10-31 00:33:34", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9885.12, "day_pnl": 0.0003, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 00:33:34", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.22, "why": "R=0.22"}
-{"t": "2026-10-31 00:33:35", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 00:53:03", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9876.84, "day_pnl": -0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 00:53:03", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.07, "why": "R=0.07"}
-{"t": "2026-10-31 00:53:03", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 01:12:07", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9875.45, "day_pnl": -0.0006, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 01:12:07", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.04, "why": "R=0.04"}
-{"t": "2026-10-31 01:12:07", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 01:31:08", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9880.87, "day_pnl": -0.0001, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 01:31:08", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.14, "why": "R=0.14"}
-{"t": "2026-10-31 01:31:09", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 01:50:57", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9878.44, "day_pnl": -0.0003, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 01:50:58", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.1, "why": "R=0.10"}
-{"t": "2026-10-31 01:50:58", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 02:09:53", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9881.05, "day_pnl": -0.0001, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 02:09:53", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.14, "why": "R=0.14"}
-{"t": "2026-10-31 02:09:53", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 02:29:28", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9880.58, "day_pnl": -0.0001, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 02:29:28", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.14, "why": "R=0.14"}
-{"t": "2026-10-31 02:29:28", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 02:49:42", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9879.12, "day_pnl": -0.0003, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 02:49:42", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.11, "why": "R=0.11"}
-{"t": "2026-10-31 02:49:43", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 03:09:09", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9881.99, "day_pnl": 0.0, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 03:09:10", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.16, "why": "R=0.16"}
-{"t": "2026-10-31 03:09:10", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 03:28:26", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9879.87, "day_pnl": -0.0002, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 03:28:26", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.12, "why": "R=0.12"}
-{"t": "2026-10-31 03:28:26", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 03:48:12", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9886.88, "day_pnl": 0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 03:48:12", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.25, "why": "R=0.25"}
-{"t": "2026-10-31 03:48:12", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 04:07:19", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9886.48, "day_pnl": 0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 04:07:19", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.24, "why": "R=0.24"}
-{"t": "2026-10-31 04:07:19", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 04:26:07", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9883.9, "day_pnl": 0.0002, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 04:26:07", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.19, "why": "R=0.19"}
-{"t": "2026-10-31 04:26:07", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 04:44:36", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9889.13, "day_pnl": 0.0007, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 04:44:36", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.29, "why": "R=0.29"}
-{"t": "2026-10-31 04:44:36", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 05:03:26", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9886.46, "day_pnl": 0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 05:03:26", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.24, "why": "R=0.24"}
-{"t": "2026-10-31 05:03:26", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 05:22:43", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9885.76, "day_pnl": 0.0004, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 05:22:44", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.23, "why": "R=0.23"}
-{"t": "2026-10-31 05:22:44", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 05:41:34", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9885.12, "day_pnl": 0.0003, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 05:41:34", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.22, "why": "R=0.22"}
-{"t": "2026-10-31 05:41:35", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 06:01:05", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9884.15, "day_pnl": 0.0002, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 06:01:05", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.2, "why": "R=0.20"}
-{"t": "2026-10-31 06:01:05", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 06:19:56", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9884.54, "day_pnl": 0.0003, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 06:19:57", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.21, "why": "R=0.21"}
-{"t": "2026-10-31 06:19:57", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 06:39:48", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9883.49, "day_pnl": 0.0002, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 06:39:48", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.19, "why": "R=0.19"}
-{"t": "2026-10-31 06:39:49", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 06:58:31", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9880.36, "day_pnl": -0.0001, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 06:58:31", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.13, "why": "R=0.13"}
-{"t": "2026-10-31 06:58:31", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 07:18:17", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9877.6, "day_pnl": -0.0004, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 07:18:17", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.08, "why": "R=0.08"}
-{"t": "2026-10-31 07:18:17", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 07:37:52", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9880.73, "day_pnl": -0.0001, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 07:37:52", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.14, "why": "R=0.14"}
-{"t": "2026-10-31 07:37:53", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 07:56:43", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9881.15, "day_pnl": -0.0001, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 07:56:44", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.15, "why": "R=0.15"}
-{"t": "2026-10-31 07:56:44", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 08:15:29", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9878.45, "day_pnl": -0.0003, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 08:15:30", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.1, "why": "R=0.10"}
-{"t": "2026-10-31 08:15:30", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 08:34:03", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9883.58, "day_pnl": 0.0002, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 08:34:03", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.19, "why": "R=0.19"}
-{"t": "2026-10-31 08:34:03", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 08:53:27", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9882.07, "day_pnl": 0.0, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 08:53:40", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.16, "why": "R=0.16"}
-{"t": "2026-10-31 08:53:40", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 09:12:20", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9879.24, "day_pnl": -0.0003, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 09:12:20", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.11, "why": "R=0.11"}
-{"t": "2026-10-31 09:12:20", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 09:30:53", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9877.91, "day_pnl": -0.0004, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 09:30:53", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.09, "why": "R=0.09"}
-{"t": "2026-10-31 09:30:53", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 09:50:41", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9878.43, "day_pnl": -0.0003, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 09:50:41", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.1, "why": "R=0.10"}
-{"t": "2026-10-31 09:50:41", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 10:09:27", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9877.12, "day_pnl": -0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 10:09:27", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.07, "why": "R=0.07"}
-{"t": "2026-10-31 10:09:27", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 10:28:40", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9874.95, "day_pnl": -0.0007, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 10:28:41", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.04, "why": "R=0.04"}
-{"t": "2026-10-31 10:28:41", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 10:47:54", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9878.24, "day_pnl": -0.0004, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 10:47:54", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.09, "why": "R=0.09"}
-{"t": "2026-10-31 10:47:54", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 11:07:26", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9879.2, "day_pnl": -0.0003, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 11:07:26", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.11, "why": "R=0.11"}
-{"t": "2026-10-31 11:07:26", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 00:03:34", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9882.87, "day_pnl": 0.0, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 00:03:34", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.18, "why": "R=0.18"}
+{"t": "2026-10-31 00:03:34", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 00:03:34", "ev": "session_skip", "pair": "EURUSD"}
+{"t": "2026-10-31 00:03:34", "ev": "session_skip", "pair": "GBPUSD"}
+{"t": "2026-10-31 00:23:59", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9881.83, "day_pnl": -0.0001, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 00:23:59", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.16, "why": "R=0.16"}
+{"t": "2026-10-31 00:24:00", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 00:43:20", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9880.61, "day_pnl": -0.0002, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 00:43:21", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.13, "why": "R=0.13"}
+{"t": "2026-10-31 00:43:21", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 01:02:43", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9872.06, "day_pnl": -0.0011, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 01:02:43", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": -0.02, "why": "R=-0.02"}
+{"t": "2026-10-31 01:02:43", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 01:21:29", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9874.89, "day_pnl": -0.0008, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 01:21:29", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.03, "why": "R=0.03"}
+{"t": "2026-10-31 01:21:29", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 01:41:10", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9877.65, "day_pnl": -0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 01:41:10", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.08, "why": "R=0.08"}
+{"t": "2026-10-31 01:41:10", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 02:00:21", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9880.46, "day_pnl": -0.0002, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 02:00:22", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.14, "why": "R=0.14"}
+{"t": "2026-10-31 02:00:22", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 02:20:02", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9880.47, "day_pnl": -0.0002, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 02:20:02", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.13, "why": "R=0.13"}
+{"t": "2026-10-31 02:20:02", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 02:39:56", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9877.62, "day_pnl": -0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 02:39:56", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.08, "why": "R=0.08"}
+{"t": "2026-10-31 02:39:56", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 02:59:31", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9878.2, "day_pnl": -0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 02:59:31", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.09, "why": "R=0.09"}
+{"t": "2026-10-31 02:59:31", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 03:18:29", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9881.23, "day_pnl": -0.0002, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 03:18:29", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.15, "why": "R=0.15"}
+{"t": "2026-10-31 03:18:29", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 03:38:14", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9886.33, "day_pnl": 0.0004, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 03:38:14", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.24, "why": "R=0.24"}
+{"t": "2026-10-31 03:38:14", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 03:57:59", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9890.0, "day_pnl": 0.0007, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 03:57:59", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.31, "why": "R=0.31"}
+{"t": "2026-10-31 03:57:59", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 04:16:52", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9887.23, "day_pnl": 0.0004, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 04:16:53", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.26, "why": "R=0.26"}
+{"t": "2026-10-31 04:16:53", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 04:35:20", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9889.42, "day_pnl": 0.0007, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 04:35:21", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.3, "why": "R=0.30"}
+{"t": "2026-10-31 04:35:21", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 04:53:54", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9888.88, "day_pnl": 0.0006, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 04:53:54", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.29, "why": "R=0.29"}
+{"t": "2026-10-31 04:53:54", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 05:13:06", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9884.7, "day_pnl": 0.0002, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 05:13:07", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.21, "why": "R=0.21"}
+{"t": "2026-10-31 05:13:07", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 05:32:14", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9887.29, "day_pnl": 0.0004, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 05:32:14", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.26, "why": "R=0.26"}
+{"t": "2026-10-31 05:32:15", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 05:50:45", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9885.48, "day_pnl": 0.0003, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 05:50:46", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.22, "why": "R=0.22"}
+{"t": "2026-10-31 05:50:46", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 06:10:28", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9884.27, "day_pnl": 0.0001, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 06:10:28", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.2, "why": "R=0.20"}
+{"t": "2026-10-31 06:10:28", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 06:29:45", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9884.73, "day_pnl": 0.0002, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 06:29:45", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.21, "why": "R=0.21"}
+{"t": "2026-10-31 06:29:45", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 06:49:12", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9880.03, "day_pnl": -0.0003, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 06:49:12", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.13, "why": "R=0.13"}
+{"t": "2026-10-31 06:49:12", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 07:08:40", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9878.43, "day_pnl": -0.0004, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 07:08:40", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.1, "why": "R=0.10"}
+{"t": "2026-10-31 07:08:40", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 07:28:21", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9877.92, "day_pnl": -0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 07:28:21", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.09, "why": "R=0.09"}
+{"t": "2026-10-31 07:28:21", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 07:47:23", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9882.91, "day_pnl": 0.0, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 07:47:23", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.18, "why": "R=0.18"}
+{"t": "2026-10-31 07:47:23", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 08:06:06", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9881.98, "day_pnl": -0.0001, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 08:06:06", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.16, "why": "R=0.16"}
+{"t": "2026-10-31 08:06:06", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 08:24:46", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9879.61, "day_pnl": -0.0003, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 08:24:46", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.12, "why": "R=0.12"}
+{"t": "2026-10-31 08:24:46", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 08:43:24", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9884.08, "day_pnl": 0.0001, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 08:43:24", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.2, "why": "R=0.20"}
+{"t": "2026-10-31 08:43:24", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 09:03:01", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9880.46, "day_pnl": -0.0002, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 09:03:01", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.13, "why": "R=0.13"}
+{"t": "2026-10-31 09:03:01", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 09:21:37", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9878.05, "day_pnl": -0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 09:21:37", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.09, "why": "R=0.09"}
+{"t": "2026-10-31 09:21:37", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 09:40:41", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9877.87, "day_pnl": -0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 09:40:42", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.09, "why": "R=0.09"}
+{"t": "2026-10-31 09:40:42", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 10:00:12", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9878.31, "day_pnl": -0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 10:00:12", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.09, "why": "R=0.09"}
+{"t": "2026-10-31 10:00:12", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 10:18:53", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9875.86, "day_pnl": -0.0007, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 10:18:55", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.05, "why": "R=0.05"}
+{"t": "2026-10-31 10:18:55", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 10:38:42", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9876.03, "day_pnl": -0.0007, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 10:38:42", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.05, "why": "R=0.05"}
+{"t": "2026-10-31 10:38:42", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 10:57:19", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9878.37, "day_pnl": -0.0005, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 10:57:19", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.1, "why": "R=0.10"}
+{"t": "2026-10-31 10:57:19", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 11:17:17", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9877.35, "day_pnl": -0.0006, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 11:17:17", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.08, "why": "R=0.08"}
+{"t": "2026-10-31 11:17:17", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
