@@ -1,9 +1,9 @@
 {
   "schema": "sentinel-v2",
-  "updated": "2026-10-31 14:44:52",
+  "updated": "2026-10-31 14:54:04",
   "day": {
     "date": "2026-10-31",
-    "start_equity": 9882.87
+    "start_equity": 9881.82
   },
   "summary_sent_day": "2026-10-29",
   "last_bar": {
