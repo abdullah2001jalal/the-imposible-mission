@@ -1,5 +1,8 @@
-{"t": "2026-10-31 00:13:02", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9881.82, "day_pnl": 0.0, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
-{"t": "2026-10-31 00:13:03", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.17, "why": "R=0.17"}
-{"t": "2026-10-31 00:13:03", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
-{"t": "2026-10-31 00:13:04", "ev": "session_skip", "pair": "EURUSD"}
-{"t": "2026-10-31 00:13:04", "ev": "session_skip", "pair": "GBPUSD"}
+{"t": "2026-10-31 00:03:34", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9882.87, "day_pnl": 0.0, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 00:03:34", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.18, "why": "R=0.18"}
+{"t": "2026-10-31 00:03:34", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
+{"t": "2026-10-31 00:03:34", "ev": "session_skip", "pair": "EURUSD"}
+{"t": "2026-10-31 00:03:34", "ev": "session_skip", "pair": "GBPUSD"}
+{"t": "2026-10-31 00:23:59", "ev": "cycle", "mode": "demo", "open": 2, "equity": 9881.83, "day_pnl": -0.0001, "halt": false, "resolved": {"EURUSD": "EURUSDm", "GBPUSD": "GBPUSDm", "XAUUSD": "XAUUSDm", "BTCUSD": "BTCUSDm"}}
+{"t": "2026-10-31 00:23:59", "ev": "manage", "ticket": "2663745632", "pair": "BTCUSDm", "plan": "HOLD", "r": 0.16, "why": "R=0.16"}
+{"t": "2026-10-31 00:24:00", "ev": "manage", "ticket": "2671398507", "pair": "XAUUSDm", "plan": "HOLD", "r": 0.33, "why": "R=0.33"}
